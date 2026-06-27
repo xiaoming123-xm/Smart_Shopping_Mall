@@ -1,0 +1,12 @@
+node_modules/
+dist/
+coverage/
+.idea/
+.vscode/
+.DS_Store
+*.iml
+*.log
+apps/api-server/**/target/
+apps/api-server/**/.flattened-pom.xml
+.env
+.env.*
