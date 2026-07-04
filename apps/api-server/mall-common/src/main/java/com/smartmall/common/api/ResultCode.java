@@ -48,7 +48,14 @@ public enum ResultCode {
     MEMBER_DISABLED(100002, "浼氬憳宸茬鐢?"),
     MEMBER_ADDRESS_NOT_FOUND(100003, "鏀惰揣鍦板潃涓嶅瓨鍦?"),
     // search 11xxxx
-    SEARCH_INDEX_UNAVAILABLE(110001, "鎼滅储绱㈠紩涓嶅彲鐢?");
+    SEARCH_INDEX_UNAVAILABLE(110001, "鎼滅储绱㈠紩涓嶅彲鐢?"),
+    // selection 12xxxx
+    SELECTION_CATEGORY_NOT_FOUND(120001, "选品分类不存在"),
+    CRAWLER_TASK_ALREADY_RUNNING(120002, "选品抓取任务正在运行"),
+    CRAWLER_TASK_NOT_FOUND(120003, "选品抓取任务不存在"),
+    // ai content 13xxxx
+    AI_CONTENT_TASK_NOT_FOUND(130001, "AI 生成任务不存在"),
+    AI_CONTENT_ASSET_INVALID(130002, "AI 生成资源无效");
     private final int code; private final String message;
     ResultCode(int code, String message){ this.code=code; this.message=message; }
     public int getCode(){ return code; } public String getMessage(){ return message; }

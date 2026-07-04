@@ -20,10 +20,11 @@
         <el-table-column label="状态" width="90">
           <template #default="{ row }"><el-tag :type="row.status === 1 ? 'success' : 'info'">{{ row.status === 1 ? '上架' : '下架' }}</el-tag></template>
         </el-table-column>
-        <el-table-column label="操作" width="280">
+        <el-table-column label="操作" width="340">
           <template #default="{ row }">
             <el-button link type="warning" size="small" @click="onToggle(row)">{{ row.status === 1 ? '下架' : '上架' }}</el-button>
             <el-button link type="primary" size="small" @click="openSkus(row)">SKU</el-button>
+            <el-button link type="success" size="small" @click="openAiGenerate(row)">AI生成</el-button>
             <el-button link type="primary" size="small" @click="openEdit(row)">编辑</el-button>
             <el-button link type="danger" size="small" @click="onDelete(row)">删除</el-button>
           </template>
@@ -90,6 +91,7 @@
 
 <script setup lang="ts">
 import { onMounted, reactive, ref } from "vue";
+import { useRouter } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { Plus, Refresh } from "@element-plus/icons-vue";
 import { loadProducts, saveProduct, deleteProduct, toggleProductStatus, loadSkus, saveSku, deleteSku } from "@/use-cases/product.uc";
@@ -99,6 +101,7 @@ import type { SpuDTO, SkuDTO, CategoryTreeDTO, BrandDTO } from "@/api";
 import { ApiError } from "@/api";
 
 const loading = ref(false);
+const router = useRouter();
 const saving = ref(false);
 const list = ref<SpuDTO[]>([]);
 const categoryTree = ref<CategoryTreeDTO[]>([]);
@@ -127,6 +130,7 @@ async function loadRefs() {
 function reset() { Object.assign(form, { id: undefined, name: "", categoryId: null, brandId: null, mainImage: "", description: "", price: 0, costPrice: 0, stock: 0, sort: 0 }); }
 function openCreate() { reset(); dialogVisible.value = true; }
 function openEdit(row: SpuDTO) { Object.assign(form, { ...row }); dialogVisible.value = true; }
+function openAiGenerate(row: SpuDTO) { if (row.id) router.push(`/admin/products/${row.id}/ai-generate`); }
 
 async function onSave() {
   if (!form.name.trim()) { ElMessage.warning("请输入名称"); return; }

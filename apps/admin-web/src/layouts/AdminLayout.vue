@@ -10,12 +10,14 @@
         active-text-color="#ffffff"
       >
         <el-menu-item index="/home"><el-icon><HomeFilled /></el-icon><span>首页</span></el-menu-item>
+        <el-menu-item index="/admin/selection"><el-icon><TrendCharts /></el-icon><span>选品中心</span></el-menu-item>
         <el-sub-menu index="catalog">
           <template #title><el-icon><Goods /></el-icon><span>商品中心</span></template>
           <el-menu-item index="/catalog/category">分类管理</el-menu-item>
           <el-menu-item index="/catalog/brand">品牌管理</el-menu-item>
           <el-menu-item index="/catalog/attribute">属性管理</el-menu-item>
           <el-menu-item index="/catalog/product">商品管理</el-menu-item>
+          <el-menu-item index="/catalog/product-ai">AI内容生成</el-menu-item>
         </el-sub-menu>
         <el-menu-item index="/inventory"><el-icon><Box /></el-icon><span>库存管理</span></el-menu-item>
         <el-sub-menu index="order">

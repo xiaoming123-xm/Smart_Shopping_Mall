@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div v-loading="loading">
     <div class="page-title">首页</div>
     <div class="stat-row">
       <div v-for="s in stats" :key="s.label" class="stat-card">
@@ -34,8 +34,13 @@
               <td><span class="tag red">{{ o.status }}</span></td>
               <td class="product-name">{{ o.product }}</td>
               <td>x{{ o.qty }}</td><td>{{ o.price }}</td>
-              <td><button class="btn-ship">确认发货</button></td>
+              <td>
+                <button class="btn-ship" :disabled="shippingOrderId === o.id" @click="onShip(o.id)">
+                  {{ shippingOrderId === o.id ? "发货中" : "确认发货" }}
+                </button>
+              </td>
             </tr>
+            <tr v-if="pendingOrders.length === 0"><td colspan="8" class="empty">暂无待发货订单</td></tr>
           </tbody>
         </table>
       </div>
@@ -55,9 +60,24 @@
   </div>
 </template>
 <script setup lang="ts">
+import { onMounted } from "vue";
+import { ElMessage } from "element-plus";
 import LineChart from "./LineChart.vue";
 import { useDashboard } from "@/composables/useDashboard";
-const { stats, days, salesAmt, salesQty, refundAmt, refundQty, pendingOrders, lowStock } = useDashboard();
+import { ApiError } from "@/api";
+
+const { loading, shippingOrderId, stats, days, salesAmt, salesQty, refundAmt, refundQty, pendingOrders, lowStock, loadDashboard, shipFromDashboard } = useDashboard();
+
+async function onShip(orderId: number) {
+  try {
+    await shipFromDashboard(orderId);
+    ElMessage.success("已发货，首页数据已刷新");
+  } catch (e) {
+    ElMessage.error(e instanceof ApiError ? e.message : "发货失败");
+  }
+}
+
+onMounted(loadDashboard);
 </script>
 <style scoped>
 .page-title{font-size:16px;font-weight:600;margin-bottom:16px;color:#333;}
@@ -84,5 +104,7 @@ th{color:#888;font-weight:500;background:#fafafa;}
 .tag.red{background:#fff1f0;color:#cf1322;}
 .tag.orange{background:#fff7e6;color:#d46b08;}
 .btn-ship{background:#1890ff;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:12px;}
+.btn-ship:disabled{background:#9ca3af;cursor:not-allowed;}
 .btn-ship:hover{background:#096dd9;}
+.empty{text-align:center;color:#999;padding:18px 10px;}
 </style>

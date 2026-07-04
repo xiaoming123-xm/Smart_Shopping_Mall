@@ -70,6 +70,38 @@ export interface PaymentDTO {
   amount: number; createdAt?: string; paidAt?: string;
 }
 
+// ---- selection ----
+export interface SelectionCategoryDTO {
+  id: number; parentId?: number | null; categoryName: string; keyword?: string;
+  level: number; sortOrder: number; enabled: boolean; children?: SelectionCategoryDTO[];
+}
+export interface SelectionProductDTO {
+  id: number; categoryId: number; platform: string; sourceProductId?: string;
+  productName: string; imageUrl?: string; sourceUrl?: string; sales7d: number;
+  avgPrice: number; profitEstimate: number; trendTag?: string;
+  competitionLevel?: string; rankNo: number; fetchedAt?: string;
+}
+export interface StartSelectionCrawlerRequest { categoryId?: number | null; keyword?: string; }
+export interface CrawlerTaskDTO {
+  taskId: string; platform: string; categoryId?: number | null; keyword?: string;
+  status: string; triggerType: string; startedAt?: string; finishedAt?: string;
+  totalCount: number; successCount: number; failReason?: string; retryCount: number;
+  createdBy?: string; createdAt?: string;
+}
+
+// ---- ai content ----
+export interface GenerateImageRequest { productId: number; imageUrl: string; mode: string; prompt?: string; }
+export interface GenerateImageResponse { taskId: string; productId: number; imageUrl: string; provider: string; status: string; }
+export interface ReplaceMainImageRequest { productId: number; imageUrl: string; }
+export interface GenerateVideoRequest {
+  productId: number; imageUrls: string[]; copyText?: string; template?: string; voiceStyle?: string;
+}
+export interface GenerateVideoResponse { taskId: string; status: string; progress: number; }
+export interface AiTaskDTO {
+  taskId: string; productId: number; taskType: string; status: string; progress: number;
+  provider?: string; outputUrl?: string; failReason?: string; createdAt?: string; updatedAt?: string;
+}
+
 // ---- system ----
 export interface SysUserDTO {
   id?: number; username: string; nickname?: string; role?: string;

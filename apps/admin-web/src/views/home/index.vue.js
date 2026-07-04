@@ -1,6 +1,19 @@
+import { onMounted } from "vue";
+import { ElMessage } from "element-plus";
 import LineChart from "./LineChart.vue";
 import { useDashboard } from "@/composables/useDashboard";
-const { stats, days, salesAmt, salesQty, refundAmt, refundQty, pendingOrders, lowStock } = useDashboard();
+import { ApiError } from "@/api";
+const { loading, shippingOrderId, stats, days, salesAmt, salesQty, refundAmt, refundQty, pendingOrders, lowStock, loadDashboard, shipFromDashboard } = useDashboard();
+async function onShip(orderId) {
+    try {
+        await shipFromDashboard(orderId);
+        ElMessage.success("已发货，首页数据已刷新");
+    }
+    catch (e) {
+        ElMessage.error(e instanceof ApiError ? e.message : "发货失败");
+    }
+}
+onMounted(loadDashboard);
 debugger; /* PartiallyEnd: #3632/scriptSetup.vue */
 const __VLS_ctx = {};
 let __VLS_components;
@@ -10,9 +23,11 @@ let __VLS_directives;
 /** @type {__VLS_StyleScopedClasses['tag']} */ ;
 /** @type {__VLS_StyleScopedClasses['tag']} */ ;
 /** @type {__VLS_StyleScopedClasses['btn-ship']} */ ;
+/** @type {__VLS_StyleScopedClasses['btn-ship']} */ ;
 // CSS variable injection 
 // CSS variable injection end 
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
+__VLS_asFunctionalDirective(__VLS_directives.vLoading)(null, { ...__VLS_directiveBindingRestFields, value: (__VLS_ctx.loading) }, null, null);
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
     ...{ class: "page-title" },
 });
@@ -151,7 +166,19 @@ for (const [o] of __VLS_getVForSourceType((__VLS_ctx.pendingOrders))) {
     (o.price);
     __VLS_asFunctionalElement(__VLS_intrinsicElements.td, __VLS_intrinsicElements.td)({});
     __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+        ...{ onClick: (...[$event]) => {
+                __VLS_ctx.onShip(o.id);
+            } },
         ...{ class: "btn-ship" },
+        disabled: (__VLS_ctx.shippingOrderId === o.id),
+    });
+    (__VLS_ctx.shippingOrderId === o.id ? "发货中" : "确认发货");
+}
+if (__VLS_ctx.pendingOrders.length === 0) {
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.tr, __VLS_intrinsicElements.tr)({});
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.td, __VLS_intrinsicElements.td)({
+        colspan: "8",
+        ...{ class: "empty" },
     });
 }
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
@@ -212,6 +239,7 @@ for (const [s] of __VLS_getVForSourceType((__VLS_ctx.lowStock))) {
 /** @type {__VLS_StyleScopedClasses['red']} */ ;
 /** @type {__VLS_StyleScopedClasses['product-name']} */ ;
 /** @type {__VLS_StyleScopedClasses['btn-ship']} */ ;
+/** @type {__VLS_StyleScopedClasses['empty']} */ ;
 /** @type {__VLS_StyleScopedClasses['table-card']} */ ;
 /** @type {__VLS_StyleScopedClasses['card-title']} */ ;
 /** @type {__VLS_StyleScopedClasses['product-name']} */ ;
@@ -220,6 +248,8 @@ const __VLS_self = (await import('vue')).defineComponent({
     setup() {
         return {
             LineChart: LineChart,
+            loading: loading,
+            shippingOrderId: shippingOrderId,
             stats: stats,
             days: days,
             salesAmt: salesAmt,
@@ -228,6 +258,7 @@ const __VLS_self = (await import('vue')).defineComponent({
             refundQty: refundQty,
             pendingOrders: pendingOrders,
             lowStock: lowStock,
+            onShip: onShip,
         };
     },
 });

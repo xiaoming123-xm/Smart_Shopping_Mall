@@ -82,6 +82,12 @@
             </version>
         </dependency>        <dependency>
             <groupId>com.smartmall</groupId>
+            <artifactId>mall-selection</artifactId>
+            <version>
+                ${project.version}
+            </version>
+        </dependency>        <dependency>
+            <groupId>com.smartmall</groupId>
             <artifactId>mall-ai</artifactId>
             <version>
                 ${project.version}
