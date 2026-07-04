@@ -1,0 +1,18 @@
+﻿spring:
+  application:
+    name: smart-mall-api
+  profiles:
+    active: local
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+# AI 妯″潡閰嶇疆(绗?灞傛ā鍨嬫帴鍏ュ眰)銆傞粯璁?mock 鍏滃簳, 鍙?崰鎹?deepseek/qwen/openai銆?mall:
+  ai:
+    provider: deepseek
+    api-key: ""
+    base-url: ""
+    model: ""

@@ -1,0 +1,10 @@
+packages:
+  - apps/admin-web
+  - apps/storefront-web
+  - packages/*
+allowBuilds:
+  esbuild: true
+  vue-demi: true
+onlyBuiltDependencies:
+  - esbuild
+  - vue-demi

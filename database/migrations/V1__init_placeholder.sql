@@ -1,0 +1,2 @@
+-- Initial Flyway placeholder migration.
+-- Core tables will be added incrementally by phase.

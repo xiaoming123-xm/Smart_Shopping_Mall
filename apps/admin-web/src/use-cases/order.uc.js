@@ -1,0 +1,6 @@
+import { orderApi } from "@/api";
+export const loadOrders = () => orderApi.list();
+export const loadOrderReviews = () => orderApi.reviews();
+export const loadOrder = (id) => orderApi.get(id);
+export const shipOrder = (id, data) => orderApi.ship(id, data);
+export const replyOrderReview = (id, reply) => orderApi.replyReview(id, { reply });
