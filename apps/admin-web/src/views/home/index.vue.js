@@ -22,6 +22,8 @@ let __VLS_directives;
 /** @type {__VLS_StyleScopedClasses['dot']} */ ;
 /** @type {__VLS_StyleScopedClasses['tag']} */ ;
 /** @type {__VLS_StyleScopedClasses['tag']} */ ;
+/** @type {__VLS_StyleScopedClasses['tag']} */ ;
+/** @type {__VLS_StyleScopedClasses['green']} */ ;
 /** @type {__VLS_StyleScopedClasses['btn-ship']} */ ;
 /** @type {__VLS_StyleScopedClasses['btn-ship']} */ ;
 // CSS variable injection 
@@ -153,7 +155,7 @@ for (const [o] of __VLS_getVForSourceType((__VLS_ctx.pendingOrders))) {
     (o.buyer);
     __VLS_asFunctionalElement(__VLS_intrinsicElements.td, __VLS_intrinsicElements.td)({});
     __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-        ...{ class: "tag red" },
+        ...{ class: (['tag', o.statusCode === 'SHIPPED' ? 'green' : 'red']) },
     });
     (o.status);
     __VLS_asFunctionalElement(__VLS_intrinsicElements.td, __VLS_intrinsicElements.td)({
@@ -165,14 +167,23 @@ for (const [o] of __VLS_getVForSourceType((__VLS_ctx.pendingOrders))) {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.td, __VLS_intrinsicElements.td)({});
     (o.price);
     __VLS_asFunctionalElement(__VLS_intrinsicElements.td, __VLS_intrinsicElements.td)({});
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-        ...{ onClick: (...[$event]) => {
-                __VLS_ctx.onShip(o.id);
-            } },
-        ...{ class: "btn-ship" },
-        disabled: (__VLS_ctx.shippingOrderId === o.id),
-    });
-    (__VLS_ctx.shippingOrderId === o.id ? "发货中" : "确认发货");
+    if (o.statusCode === 'PAID') {
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+            ...{ onClick: (...[$event]) => {
+                    if (!(o.statusCode === 'PAID'))
+                        return;
+                    __VLS_ctx.onShip(o.id);
+                } },
+            ...{ class: "btn-ship" },
+            disabled: (__VLS_ctx.shippingOrderId === o.id),
+        });
+        (__VLS_ctx.shippingOrderId === o.id ? "发货中" : "确认发货");
+    }
+    else {
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+            ...{ class: "done-text" },
+        });
+    }
 }
 if (__VLS_ctx.pendingOrders.length === 0) {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.tr, __VLS_intrinsicElements.tr)({});
@@ -235,10 +246,9 @@ for (const [s] of __VLS_getVForSourceType((__VLS_ctx.lowStock))) {
 /** @type {__VLS_StyleScopedClasses['wide']} */ ;
 /** @type {__VLS_StyleScopedClasses['card-title']} */ ;
 /** @type {__VLS_StyleScopedClasses['small']} */ ;
-/** @type {__VLS_StyleScopedClasses['tag']} */ ;
-/** @type {__VLS_StyleScopedClasses['red']} */ ;
 /** @type {__VLS_StyleScopedClasses['product-name']} */ ;
 /** @type {__VLS_StyleScopedClasses['btn-ship']} */ ;
+/** @type {__VLS_StyleScopedClasses['done-text']} */ ;
 /** @type {__VLS_StyleScopedClasses['empty']} */ ;
 /** @type {__VLS_StyleScopedClasses['table-card']} */ ;
 /** @type {__VLS_StyleScopedClasses['card-title']} */ ;

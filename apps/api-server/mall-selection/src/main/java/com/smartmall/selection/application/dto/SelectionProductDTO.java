@@ -16,6 +16,7 @@ public class SelectionProductDTO {
     private String sourceUrl;
     private Integer sales7d;
     private BigDecimal avgPrice;
+    private BigDecimal salesAmount;
     private BigDecimal profitEstimate;
     private String trendTag;
     private String competitionLevel;

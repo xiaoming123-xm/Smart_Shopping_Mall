@@ -1,7 +1,8 @@
-import { computed, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useOrderStore } from "@/stores/order";
 import { payOrder } from "@/use-cases/payOrder";
+import { syncOrdersFromBackend } from "@/use-cases/orderSync";
 const route = useRoute();
 const router = useRouter();
 const orderStore = useOrderStore();
@@ -12,10 +13,25 @@ const money = (n) => Number(n).toFixed(2);
 async function doPay() {
     if (!order.value || paying.value)
         return;
+    if (order.value.status === "PAID") {
+        router.push("/order");
+        return;
+    }
     paying.value = true;
-    await payOrder(String(route.params.orderId), router);
-    paying.value = false;
+    try {
+        await payOrder(String(route.params.orderId), router);
+    }
+    catch (error) {
+        const msg = error instanceof Error ? error.message : "支付失败，请稍后重试";
+        window.alert(msg);
+    }
+    finally {
+        paying.value = false;
+    }
 }
+onMounted(() => {
+    syncOrdersFromBackend().catch(() => null);
+});
 debugger; /* PartiallyEnd: #3632/scriptSetup.vue */
 const __VLS_ctx = {};
 let __VLS_components;
@@ -99,9 +115,9 @@ if (__VLS_ctx.order) {
     });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
         ...{ onClick: (__VLS_ctx.doPay) },
-        disabled: (__VLS_ctx.paying || __VLS_ctx.order.status !== 'CREATED'),
+        disabled: (__VLS_ctx.paying || !__VLS_ctx.order),
     });
-    (__VLS_ctx.paying ? "正在提交中..." : __VLS_ctx.order.status === "CREATED" ? "下一步" : "已支付");
+    (__VLS_ctx.paying ? "正在提交中..." : __VLS_ctx.order.status === "PAID" ? "查看订单" : "下一步");
 }
 else {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({

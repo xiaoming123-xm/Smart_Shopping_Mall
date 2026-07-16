@@ -36,8 +36,13 @@ const loading = ref(false);
 
 async function doCheckout() {
   loading.value = true;
-  await checkout(router);
-  loading.value = false;
+  try {
+    await checkout(router);
+  } catch (e) {
+    window.alert(e instanceof Error ? e.message : "下单失败，请稍后重试");
+  } finally {
+    loading.value = false;
+  }
 }
 </script>
 <style scoped>

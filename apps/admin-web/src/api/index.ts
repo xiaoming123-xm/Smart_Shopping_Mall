@@ -8,3 +8,4 @@ export { paymentApi } from "./payment.api";
 export { sysUserApi } from "./system.api";
 export { selectionApi } from "./selection.api";
 export { productAiApi } from "./product-ai.api";
+export { aiPromptApi } from "./ai-prompt.api";

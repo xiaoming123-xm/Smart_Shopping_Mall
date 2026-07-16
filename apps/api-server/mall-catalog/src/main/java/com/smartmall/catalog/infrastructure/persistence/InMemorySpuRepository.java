@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
-@Repository @Profile("!mysql") public class InMemorySpuRepository implements SpuRepository {
+@Repository @Profile("!local") public class InMemorySpuRepository implements SpuRepository {
     private final Map<Long,Spu> spuStore=new ConcurrentHashMap<>();
     private final Map<Long,Sku> skuStore=new ConcurrentHashMap<>();
     private final AtomicLong spuIdGen=new AtomicLong(0);
@@ -34,6 +34,7 @@ import java.util.concurrent.atomic.AtomicLong;
     @Override public Spu save(Spu s){ LocalDateTime now=LocalDateTime.now(); if(s.getId()==null){s.setId(spuIdGen.incrementAndGet());s.setCreatedAt(now);}s.setUpdatedAt(now);spuStore.put(s.getId(),s);return s; }
     @Override public Optional<Spu> findById(Long id){ return Optional.ofNullable(spuStore.get(id)); }
     @Override public List<Spu> findAll(){ return spuStore.values().stream().sorted(Comparator.comparing(Spu::getSort,Comparator.nullsLast(Comparator.naturalOrder()))).toList(); }
+    @Override public List<Spu> findByCategoryIds(List<Long> categoryIds){ if(categoryIds==null||categoryIds.isEmpty()) return findAll(); return findAll().stream().filter(s->s.getCategoryId()!=null&&categoryIds.contains(s.getCategoryId())).toList(); }
     @Override public void deleteById(Long id){ spuStore.remove(id); }
     @Override public Sku saveSku(Sku sku){ if(sku.getId()==null) sku.setId(skuIdGen.incrementAndGet()); skuStore.put(sku.getId(),sku); return sku; }
     @Override public Optional<Sku> findSkuById(Long id){ return Optional.ofNullable(skuStore.get(id)); }

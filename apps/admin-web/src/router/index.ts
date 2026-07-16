@@ -20,6 +20,7 @@ const routes: RouteRecordRaw[] = [
       { path: "order", name: "order", component: () => import("@/views/order/index.vue"), meta: { title: "订单管理" } },
       { path: "order/review", name: "order-review", component: () => import("@/views/order/review.vue"), meta: { title: "订单评价" } },
       { path: "payment", name: "payment", component: () => import("@/views/payment/index.vue"), meta: { title: "支付管理" } },
+      { path: "payment/prompt", name: "payment-prompt", component: () => import("@/views/payment/prompt.vue"), meta: { title: "提示词管理" } },
       { path: "system/user", name: "system-user", component: () => import("@/views/system/user.vue"), meta: { title: "用户管理" } },
     ],
   },

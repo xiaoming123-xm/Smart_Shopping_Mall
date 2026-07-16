@@ -1,28 +1,34 @@
-import { computed, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { useOrderStore } from "@/stores/order";
-import { receiveOrderFlow, reviewOrderFlow, shipOrderFlow } from "@/use-cases/orderFlow";
+import { receiveOrderFlow, requestRefundFlow, reviewOrderFlow } from "@/use-cases/orderFlow";
+import { syncOrdersFromBackend } from "@/use-cases/orderSync";
 const orderStore = useOrderStore();
 const active = ref("ALL");
 const logisticsId = ref("");
 const reviewId = ref("");
 const rating = ref(5);
 const reviewText = ref("东西很不错，很满意，下次还会光临。");
+const syncing = ref(true);
 const tabs = [
     { key: "ALL", label: "所有订单" },
     { key: "CREATED", label: "待付款" },
     { key: "PAID", label: "待发货" },
     { key: "SHIPPED", label: "待收货" },
     { key: "RECEIVED", label: "待评价" },
+    { key: "REFUND_REQUESTED", label: "退货中" },
 ];
-const filtered = computed(() => active.value === "ALL" ? orderStore.orders : orderStore.orders.filter((o) => o.status === active.value));
-const logisticsOrder = computed(() => logisticsId.value ? orderStore.getOrder(logisticsId.value) : undefined);
-const reviewOrder = computed(() => reviewId.value ? orderStore.getOrder(reviewId.value) : undefined);
+const filtered = computed(() => (active.value === "ALL" ? orderStore.orders : orderStore.orders.filter((o) => o.status === active.value)));
+const logisticsOrder = computed(() => (logisticsId.value ? orderStore.getOrder(logisticsId.value) : undefined));
+const reviewOrder = computed(() => (reviewId.value ? orderStore.getOrder(reviewId.value) : undefined));
 const money = (n) => Number(n).toFixed(2);
 const dateOnly = (v) => v.split(" ")[0] || v;
 const itemCount = (o) => o.items.reduce((sum, it) => sum + it.qty, 0);
-const refundTip = () => window.alert("已提交模拟退款申请，后台可继续扩展退款审核流程。");
-async function ship(id) {
-    await shipOrderFlow(id);
+function canRefund(status) {
+    return status === "PAID" || status === "SHIPPED" || status === "RECEIVED";
+}
+async function requestRefund(orderId, productName) {
+    await requestRefundFlow(orderId, productName);
+    window.alert("已提交退货/退款申请，等待商家处理。");
 }
 async function receive(id) {
     await receiveOrderFlow(id);
@@ -41,6 +47,9 @@ async function submitReview() {
     await reviewOrderFlow(reviewId.value, rating.value, reviewText.value);
     reviewId.value = "";
 }
+onMounted(() => {
+    syncOrdersFromBackend().catch(() => null).finally(() => { syncing.value = false; });
+});
 debugger; /* PartiallyEnd: #3632/scriptSetup.vue */
 const __VLS_ctx = {};
 let __VLS_components;
@@ -57,6 +66,7 @@ let __VLS_directives;
 /** @type {__VLS_StyleScopedClasses['good']} */ ;
 /** @type {__VLS_StyleScopedClasses['good']} */ ;
 /** @type {__VLS_StyleScopedClasses['actions']} */ ;
+/** @type {__VLS_StyleScopedClasses['refund-state']} */ ;
 /** @type {__VLS_StyleScopedClasses['price']} */ ;
 /** @type {__VLS_StyleScopedClasses['paid']} */ ;
 /** @type {__VLS_StyleScopedClasses['actions']} */ ;
@@ -143,7 +153,12 @@ for (const [t] of __VLS_getVForSourceType((__VLS_ctx.tabs))) {
     });
     (t.label);
 }
-if (__VLS_ctx.filtered.length) {
+if (__VLS_ctx.syncing) {
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "empty" },
+    });
+}
+else if (__VLS_ctx.filtered.length) {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "list" },
     });
@@ -167,7 +182,7 @@ if (__VLS_ctx.filtered.length) {
         });
         for (const [it] of __VLS_getVForSourceType((o.items))) {
             __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                key: (it.product.id),
+                key: (`${o.id}-${it.product.skuId || it.product.id}`),
                 ...{ class: "good" },
             });
             __VLS_asFunctionalElement(__VLS_intrinsicElements.img)({
@@ -179,9 +194,32 @@ if (__VLS_ctx.filtered.length) {
             (it.product.name);
             __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({});
             (it.product.variants[0]?.label || "默认款");
-            if (o.status === 'PAID') {
+            if (__VLS_ctx.canRefund(o.status)) {
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-                    ...{ onClick: (__VLS_ctx.refundTip) },
+                    ...{ onClick: (...[$event]) => {
+                            if (!!(__VLS_ctx.syncing))
+                                return;
+                            if (!(__VLS_ctx.filtered.length))
+                                return;
+                            if (!(__VLS_ctx.canRefund(o.status)))
+                                return;
+                            __VLS_ctx.requestRefund(o.id, it.product.name);
+                        } },
+                });
+            }
+            else if (o.status === 'REFUND_REQUESTED') {
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+                    ...{ class: "refund-state" },
+                });
+            }
+            else if (o.status === 'REFUNDED') {
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+                    ...{ class: "refund-state success" },
+                });
+            }
+            else if (o.status === 'REFUND_REJECTED') {
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+                    ...{ class: "refund-state" },
                 });
             }
         }
@@ -214,21 +252,11 @@ if (__VLS_ctx.filtered.length) {
             __VLS_19.slots.default;
             var __VLS_19;
         }
-        if (o.status === 'PAID') {
-            __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-                ...{ onClick: (...[$event]) => {
-                        if (!(__VLS_ctx.filtered.length))
-                            return;
-                        if (!(o.status === 'PAID'))
-                            return;
-                        __VLS_ctx.ship(o.id);
-                    } },
-                ...{ class: "primary" },
-            });
-        }
         if (o.status === 'SHIPPED') {
             __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
                 ...{ onClick: (...[$event]) => {
+                        if (!!(__VLS_ctx.syncing))
+                            return;
                         if (!(__VLS_ctx.filtered.length))
                             return;
                         if (!(o.status === 'SHIPPED'))
@@ -241,6 +269,8 @@ if (__VLS_ctx.filtered.length) {
         if (o.status === 'RECEIVED') {
             __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
                 ...{ onClick: (...[$event]) => {
+                        if (!!(__VLS_ctx.syncing))
+                            return;
                         if (!(__VLS_ctx.filtered.length))
                             return;
                         if (!(o.status === 'RECEIVED'))
@@ -253,6 +283,8 @@ if (__VLS_ctx.filtered.length) {
         if (o.logisticsTraces.length) {
             __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
                 ...{ onClick: (...[$event]) => {
+                        if (!!(__VLS_ctx.syncing))
+                            return;
                         if (!(__VLS_ctx.filtered.length))
                             return;
                         if (!(o.logisticsTraces.length))
@@ -357,15 +389,19 @@ if (__VLS_ctx.reviewOrder) {
 /** @type {__VLS_StyleScopedClasses['active']} */ ;
 /** @type {__VLS_StyleScopedClasses['main']} */ ;
 /** @type {__VLS_StyleScopedClasses['tabs']} */ ;
+/** @type {__VLS_StyleScopedClasses['empty']} */ ;
 /** @type {__VLS_StyleScopedClasses['list']} */ ;
 /** @type {__VLS_StyleScopedClasses['order-card']} */ ;
 /** @type {__VLS_StyleScopedClasses['order-body']} */ ;
 /** @type {__VLS_StyleScopedClasses['goods']} */ ;
 /** @type {__VLS_StyleScopedClasses['good']} */ ;
+/** @type {__VLS_StyleScopedClasses['refund-state']} */ ;
+/** @type {__VLS_StyleScopedClasses['refund-state']} */ ;
+/** @type {__VLS_StyleScopedClasses['success']} */ ;
+/** @type {__VLS_StyleScopedClasses['refund-state']} */ ;
 /** @type {__VLS_StyleScopedClasses['price']} */ ;
 /** @type {__VLS_StyleScopedClasses['paid']} */ ;
 /** @type {__VLS_StyleScopedClasses['actions']} */ ;
-/** @type {__VLS_StyleScopedClasses['primary']} */ ;
 /** @type {__VLS_StyleScopedClasses['primary']} */ ;
 /** @type {__VLS_StyleScopedClasses['primary']} */ ;
 /** @type {__VLS_StyleScopedClasses['primary']} */ ;
@@ -390,6 +426,7 @@ const __VLS_self = (await import('vue')).defineComponent({
             reviewId: reviewId,
             rating: rating,
             reviewText: reviewText,
+            syncing: syncing,
             tabs: tabs,
             filtered: filtered,
             logisticsOrder: logisticsOrder,
@@ -397,8 +434,8 @@ const __VLS_self = (await import('vue')).defineComponent({
             money: money,
             dateOnly: dateOnly,
             itemCount: itemCount,
-            refundTip: refundTip,
-            ship: ship,
+            canRefund: canRefund,
+            requestRefund: requestRefund,
             receive: receive,
             openLogistics: openLogistics,
             openReview: openReview,

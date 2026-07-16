@@ -2,13 +2,16 @@ package com.smartmall.payment.infrastructure.persistence;
 import com.smartmall.payment.domain.model.Payment;
 import com.smartmall.payment.domain.repository.PaymentRepository;
 import jakarta.annotation.PostConstruct;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Repository;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
-@Repository public class InMemoryPaymentRepository implements PaymentRepository {
+@Repository
+@Profile("!local")
+public class InMemoryPaymentRepository implements PaymentRepository {
     private final Map<Long,Payment> store=new ConcurrentHashMap<>();
     private final AtomicLong idGen=new AtomicLong(0);
     @PostConstruct public void seed(){

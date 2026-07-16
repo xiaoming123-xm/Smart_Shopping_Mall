@@ -9,5 +9,6 @@ import java.util.List;
     private String sender; private String senderPhone; private String senderAddress; private String logisticsCompany; private String trackingNo;
     private LocalDateTime shippedAt; private LocalDateTime receivedAt; private Integer rating; private String reviewContent;
     private LocalDateTime reviewedAt; private String reviewReply; private LocalDateTime reviewRepliedAt;
+    private String refundReason; private LocalDateTime refundRequestedAt; private String refundHandleNote; private LocalDateTime refundHandledAt;
     private LocalDateTime createdAt; private List<OrderItemDTO> items; private List<LogisticsTraceDTO> logisticsTraces;
 }

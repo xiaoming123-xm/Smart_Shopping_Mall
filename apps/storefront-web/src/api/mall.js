@@ -1,38 +1,107 @@
-import { httpGet, httpPost } from "./http";
-import { products as fallbackProducts } from "./mock";
+import { httpDelete, httpGet, httpPost } from "./http";
 const categoryNames = {
-    1: "数码",
-    2: "家居",
-    3: "服饰",
-    4: "食品",
+    1: "数码家电",
+    2: "服装鞋帽",
+    3: "美妆个护",
+    4: "家居生活",
+    5: "食品生鲜",
+    6: "文体娱乐",
+    7: "其他",
+    8: "羽绒服",
+    9: "服装鞋帽",
+    301: "衬衫",
+    302: "羽绒服",
 };
-function toProduct(spu) {
-    const fallback = fallbackProducts.find((p) => p.id === Number(spu.id)) || fallbackProducts[0];
-    const cover = spu.mainImage || fallback.cover;
+function buildPlaceholderProduct(spu) {
     return {
         id: Number(spu.id),
+        skuId: Number(spu.id),
+        skuCode: `SKU-${spu.id}`,
         name: spu.name || "未命名商品",
         category: categoryNames[Number(spu.categoryId)] || "全部",
         price: Number(spu.price ?? 0),
         cost: Number(spu.costPrice ?? 0),
         stock: Number(spu.stock ?? 0),
-        sales: Math.max(20, Number(spu.sort ?? 0) * 3),
+        sales: Math.max(0, Number(spu.sort ?? 0) * 3),
         buyers: Math.max(0, Number(spu.sort ?? 0)),
-        cover,
-        images: [cover],
-        variants: [{ label: "默认款", image: cover }],
-        desc: spu.description || "商城精选商品，可加入购物车并完成模拟下单支付。",
-        tags: fallback.tags,
-        detail: fallback.detail,
+        cover: spu.mainImage || "",
+        images: spu.mainImage ? [spu.mainImage] : [],
+        variants: [],
+        desc: spu.description || "",
+        tags: buildAttributeTags(spu.attributesJson),
+        detail: buildAttributeTags(spu.attributesJson),
     };
 }
-export async function listProducts() {
+function buildVariants(spu, placeholder) {
+    const attrTags = buildAttributeTags(spu.attributesJson);
+    if (spu.skus?.length) {
+        return spu.skus.map((sku) => ({
+            label: sku.specs || attrTags.join("/") || sku.skuCode || "默认款",
+            image: spu.mainImage || placeholder.cover,
+            skuId: Number(sku.id),
+            skuCode: sku.skuCode || undefined,
+        }));
+    }
+    return [
+        {
+            label: "默认款",
+            image: spu.mainImage || placeholder.cover,
+            skuId: Number(spu.id),
+            skuCode: `SKU-${spu.id}`,
+        },
+    ];
+}
+function buildAttributeTags(raw) {
+    if (!raw)
+        return [];
     try {
-        const rows = await httpGet("/catalog/products");
-        return rows.length ? rows.map(toProduct) : fallbackProducts;
+        const parsed = JSON.parse(raw);
+        return Object.entries(parsed).flatMap(([key, value]) => Array.isArray(value) ? value.map((v) => `${key}:${v}`) : [`${key}:${value}`]);
     }
     catch {
-        return fallbackProducts;
+        return [];
+    }
+}
+function toProduct(spu) {
+    const placeholder = buildPlaceholderProduct(spu);
+    const variants = buildVariants(spu, placeholder);
+    const defaultVariant = variants[0];
+    const cover = spu.mainImage || "";
+    return {
+        id: Number(spu.id),
+        skuId: defaultVariant?.skuId,
+        skuCode: defaultVariant?.skuCode,
+        name: spu.name || "未命名商品",
+        category: categoryNames[Number(spu.categoryId)] || "全部",
+        price: Number(spu.price ?? 0),
+        cost: Number(spu.costPrice ?? 0),
+        stock: Number(spu.stock ?? 0),
+        sales: Math.max(0, Number(spu.sort ?? 0) * 3),
+        buyers: Math.max(0, Number(spu.sort ?? 0)),
+        cover,
+        images: cover ? [cover] : [],
+        variants,
+        desc: spu.description || "",
+        tags: buildAttributeTags(spu.attributesJson),
+        detail: buildAttributeTags(spu.attributesJson),
+    };
+}
+export async function listProducts(categoryId) {
+    try {
+        const query = categoryId ? `?categoryId=${categoryId}` : "";
+        const rows = await httpGet(`/catalog/products${query}`);
+        return rows.map(toProduct);
+    }
+    catch {
+        return [];
+    }
+}
+export async function listCategoryTree() {
+    try {
+        return await httpGet("/catalog/categories/tree");
+    }
+    catch {
+        return [];
     }
 }
 export async function getProductDetail(id) {
@@ -40,7 +109,7 @@ export async function getProductDetail(id) {
         return toProduct(await httpGet(`/catalog/products/${id}`));
     }
     catch {
-        return fallbackProducts.find((p) => p.id === id);
+        return undefined;
     }
 }
 export async function createBackendOrder(items, amount) {
@@ -50,24 +119,13 @@ export async function createBackendOrder(items, amount) {
         receiverPhone: "18699999999",
         address: "湖北省武汉市武昌区八一路",
         items: items.map((it) => ({
-            skuId: it.product.id,
-            skuCode: `SKU-${it.product.id}`,
+            skuId: it.product.skuId || it.product.id,
+            skuCode: it.product.skuCode || `SKU-${it.product.id}`,
             productName: it.product.name,
             price: it.product.price,
             quantity: it.qty,
         })),
-    }).catch(() => ({
-        id: Date.now(),
-        orderNo: `LOCAL-${Date.now()}`,
-        status: "CREATED",
-        statusText: "待付款",
-        totalAmount: amount,
-        receiver: "用户",
-        receiverPhone: "18699999999",
-        address: "湖北省武汉市武昌区八一路",
-        createdAt: new Date().toISOString(),
-        items: items.map((it) => ({ productName: it.product.name, quantity: it.qty, price: it.product.price })),
-    }));
+    });
 }
 export async function createAndPayBackendPayment(orderId, amount) {
     const payment = await httpPost("/payments", { orderId, channel: "MOCK", amount });
@@ -82,7 +140,7 @@ export async function shipBackendOrder(orderId) {
         senderPhone: "18600000000",
         senderAddress: "江苏省连云港市花果山水帘洞",
         logisticsCompany: "顺丰速运",
-        trackingNo: "SF123456465",
+        trackingNo: `SF${Date.now()}`,
     });
 }
 export async function receiveBackendOrder(orderId) {
@@ -91,18 +149,35 @@ export async function receiveBackendOrder(orderId) {
 export async function reviewBackendOrder(orderId, rating, content) {
     return httpPost(`/orders/${orderId}/review`, { rating, content });
 }
+export async function requestBackendRefund(orderId, reason) {
+    return httpPost(`/orders/${orderId}/refund/request`, { reason });
+}
 export async function getBackendLogistics(orderId) {
     return httpGet(`/orders/${orderId}/logistics`);
 }
+export async function listBackendOrders() {
+    return httpGet("/orders");
+}
+export async function listBackendMessages(memberId = 1) {
+    return httpGet(`/messages?memberId=${memberId}`);
+}
+export async function hideBackendMessage(id) {
+    await httpDelete(`/messages/${id}`);
+}
 export async function askShoppingGuide(message) {
     try {
-        const reply = await httpPost("/ai/shopping-guide", { message });
-        return reply.answer || reply.content || reply.message || "AI 已收到你的问题，但暂时没有生成内容。";
+        const reply = await httpPost("/ai/shopping-guide", { memberId: 1, message });
+        return reply.reply || reply.answer || reply.content || reply.message || "AI 助手暂时没有返回内容。";
     }
     catch {
-        const hit = fallbackProducts.find((p) => message.includes(p.category) || message.includes(p.name.slice(0, 2)));
-        return hit
-            ? `推荐你看看「${hit.name}」，价格 ¥${hit.price}，库存 ${hit.stock}，适合当前演示下单。`
-            : "可以告诉我品类、预算或用途，我会帮你从当前商品里挑选。";
+        return "AI 助手暂时不可用，请稍后重试。";
+    }
+}
+export async function listAiHistory(limit = 30) {
+    try {
+        return await httpGet(`/ai/shopping-guide/history?memberId=1&limit=${limit}`);
+    }
+    catch {
+        return [];
     }
 }

@@ -20,7 +20,15 @@
         <el-table-column label="商品信息" width="360">
           <template #default="{ row }">
             <div class="goods">
-              <div class="cover">图</div>
+              <el-image
+                v-if="row.items?.[0]?.imageUrl"
+                class="cover"
+                :src="row.items[0].imageUrl"
+                fit="cover"
+                :preview-src-list="[row.items[0].imageUrl]"
+                preview-teleported
+              />
+              <div v-else class="cover empty-cover">图</div>
               <span>{{ row.items?.[0]?.productName || "-" }}</span>
             </div>
           </template>
@@ -108,7 +116,8 @@ load();
 .user-cell { display: flex; align-items: center; gap: 10px; }
 .avatar { width: 48px; height: 48px; border-radius: 50%; background: #2f95bd; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 12px; }
 .goods { display: flex; align-items: center; gap: 14px; }
-.cover { width: 72px; height: 72px; border-radius: 6px; background: #d8d8d8; display: flex; align-items: center; justify-content: center; color: #777; }
+.cover { width: 72px; height: 72px; border-radius: 6px; background: #d8d8d8; display: flex; align-items: center; justify-content: center; color: #777; overflow: hidden; flex: 0 0 72px; }
+.empty-cover { background: #d8d8d8; }
 .comment-head { display: flex; justify-content: space-between; color: #777; background: #eee; padding: 8px 10px; margin-bottom: 10px; }
 .comment p { margin: 0 0 10px; color: #333; }
 .stars { color: #f7b733; font-size: 20px; margin-bottom: 10px; }

@@ -7,7 +7,7 @@ import java.util.List;
     private Long id;
     private String orderNo;
     private Long memberId;
-    private String status;       // CREATED 待支付, PAID 已支付, SHIPPED 已发货, RECEIVED 已收货, COMPLETED 已评价, CANCELLED 已取消
+    private String status;       // CREATED 待支付, PAID 已支付, SHIPPED 已发货, RECEIVED 已收货, COMPLETED 已评价, CANCELLED 已取消, REFUND_REQUESTED 退货申请中, REFUNDED 已退款, REFUND_REJECTED 退货已拒绝
     private BigDecimal totalAmount;
     private String receiver;
     private String receiverPhone;
@@ -24,6 +24,10 @@ import java.util.List;
     private LocalDateTime reviewedAt;
     private String reviewReply;
     private LocalDateTime reviewRepliedAt;
+    private String refundReason;
+    private LocalDateTime refundRequestedAt;
+    private String refundHandleNote;
+    private LocalDateTime refundHandledAt;
     private LocalDateTime createdAt;
     private List<OrderItem> items;
 }

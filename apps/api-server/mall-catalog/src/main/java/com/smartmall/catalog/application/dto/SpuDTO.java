@@ -10,6 +10,7 @@ import java.util.List;
     private Long brandId;
     private String mainImage;
     private String description;
+    private String attributesJson;
     private BigDecimal price;
     private BigDecimal costPrice;
     private Integer stock;

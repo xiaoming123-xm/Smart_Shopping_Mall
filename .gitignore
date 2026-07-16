@@ -10,3 +10,5 @@ apps/api-server/**/target/
 apps/api-server/**/.flattened-pom.xml
 .env
 .env.*
+work/crawler/
+tools/crawler/__pycache__/

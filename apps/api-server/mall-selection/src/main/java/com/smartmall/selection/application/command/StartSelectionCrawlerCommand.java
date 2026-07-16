@@ -6,4 +6,5 @@ import lombok.Data;
 public class StartSelectionCrawlerCommand {
     private Long categoryId;
     private String keyword;
+    private Integer limit;
 }

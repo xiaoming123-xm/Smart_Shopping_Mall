@@ -18,6 +18,15 @@ public class CrawlerTaskDTO {
     private Integer successCount;
     private String failReason;
     private Integer retryCount;
+    private String antiCrawlStatus;
+    private Integer anomalyCount;
+    private Integer blockSignalCount;
+    private Integer backoffCount;
+    private Boolean proxyEnabled;
+    private String observedUserAgent;
+    private Double avgDelayMs;
+    private Double maxDelayMs;
+    private String antiCrawlEvidence;
     private String createdBy;
     private LocalDateTime createdAt;
 }

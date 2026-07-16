@@ -2,6 +2,8 @@ import { ref } from "vue";
 import { loadOrders, shipOrder } from "@/use-cases/order.uc";
 import { loadStocks } from "@/use-cases/inventory.uc";
 const paidStatuses = new Set(["PAID", "SHIPPED", "RECEIVED", "COMPLETED"]);
+const shipmentStatuses = new Set(["PAID", "SHIPPED"]);
+const refundRequestStatus = "REFUND_REQUESTED";
 export function useDashboard() {
     const loading = ref(false);
     const shippingOrderId = ref(null);
@@ -47,19 +49,23 @@ export function useDashboard() {
         const dayKeys = days.value;
         salesAmt.value = dayKeys.map((day) => sumPaidAmount(orders, day));
         salesQty.value = dayKeys.map((day) => countPaidOrders(orders, day));
-        refundAmt.value = dayKeys.map(() => 0);
-        refundQty.value = dayKeys.map(() => 0);
+        refundAmt.value = dayKeys.map((day) => sumRefundRequestAmount(orders, day));
+        refundQty.value = dayKeys.map((day) => countRefundRequests(orders, day));
         const today = dayKey(new Date());
         const yesterday = dayKey(offsetDate(new Date(), -1));
         const todaySales = sumPaidAmount(orders, today);
         const yesterdaySales = sumPaidAmount(orders, yesterday);
         const todayOrders = countPaidOrders(orders, today);
         const yesterdayOrders = countPaidOrders(orders, yesterday);
+        const todayRefundRequests = countRefundRequests(orders, today);
+        const yesterdayRefundRequests = countRefundRequests(orders, yesterday);
+        const todayRefundAmount = sumRefundRequestAmount(orders, today);
+        const yesterdayRefundAmount = sumRefundRequestAmount(orders, yesterday);
         stats.value = [
             {
                 label: "今日销售额",
                 value: money(todaySales),
-                icon: "💰",
+                icon: "💵",
                 color: "#1890ff",
                 sub: `昨日:${money(yesterdaySales)}`,
                 trend: trend(todaySales, yesterdaySales),
@@ -67,7 +73,7 @@ export function useDashboard() {
             {
                 label: "今日订单数",
                 value: String(todayOrders),
-                icon: "🛒",
+                icon: "📦",
                 color: "#52c41a",
                 sub: `昨日:${yesterdayOrders}`,
                 trend: trend(todayOrders, yesterdayOrders),
@@ -81,22 +87,23 @@ export function useDashboard() {
                 trend: "0%",
             },
             {
-                label: "今日退款",
-                value: "¥0.00",
-                icon: "↩️",
+                icon: "↩",
+                label: "待处理退货",
+                value: String(todayRefundRequests),
                 color: "#f5222d",
-                sub: "昨日:¥0.00",
-                trend: "0%",
+                sub: `昨日:${yesterdayRefundRequests} | 金额:${money(todayRefundAmount)}`,
+                trend: trend(todayRefundRequests, yesterdayRefundRequests),
             },
         ];
         pendingOrders.value = orders
-            .filter((o) => o.status === "PAID")
+            .filter((o) => shipmentStatuses.has(o.status))
             .map((o) => ({
             id: o.id,
             time: formatTime(o.createdAt),
             no: o.orderNo,
             buyer: o.receiver || "商城用户",
-            status: o.statusText || "待发货",
+            statusCode: o.status,
+            status: o.status === "SHIPPED" ? "已发货" : o.statusText || "待发货",
             product: o.items?.[0]?.productName || "-",
             qty: o.items?.reduce((sum, item) => sum + Number(item.quantity || 0), 0) || 0,
             price: money(Number(o.totalAmount || 0)),
@@ -152,6 +159,14 @@ function sumPaidAmount(orders, day) {
 }
 function countPaidOrders(orders, day) {
     return orders.filter((o) => paidStatuses.has(o.status) && orderDay(o) === day).length;
+}
+function sumRefundRequestAmount(orders, day) {
+    return orders
+        .filter((o) => o.status === refundRequestStatus && orderDay(o) === day)
+        .reduce((sum, o) => sum + Number(o.totalAmount || 0), 0);
+}
+function countRefundRequests(orders, day) {
+    return orders.filter((o) => o.status === refundRequestStatus && orderDay(o) === day).length;
 }
 function trend(current, previous) {
     if (previous === 0)

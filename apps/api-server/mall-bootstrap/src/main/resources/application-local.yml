@@ -9,7 +9,7 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
   flyway:
     enabled: true
-    locations: filesystem:../../../database/migrations
+    locations: classpath:migrations,filesystem:../../../database/migrations
     baseline-on-migrate: true
   data:
     redis:
@@ -18,6 +18,31 @@ spring:
 
 mall:
   ai:
-    provider: deepseek
+    provider: stepfun
+    api-key: "4guDH3xr8OQYGb50TMfLFRoiOFMSGLg4UjHEaliU6q18VCWmcANufIB8v8UQDhzgj"
+    base-url: "https://api.stepfun.com/step_plan/v1"
+    model: "step-3.7-flash"
+    chat:
+      provider: stepfun
+      base-url: "https://api.stepfun.com/step_plan/v1"
+      api-key: "4guDH3xr8OQYGb50TMfLFRoiOFMSGLg4UjHEaliU6q18VCWmcANufIB8v8UQDhzgj"
+      model: "step-3.7-flash"
+      timeout-ms: 30000
+    image:
+      provider: stepfun
+      base-url: "https://api.stepfun.com/v1"
+      api-key: "4guDH3xr8OQYGb50TMfLFRoiOFMSGLg4UjHEaliU6q18VCWmcANufIB8v8UQDhzgj"
+      model: "step-image-edit-2"
+      size: 1024x1024
+      response-format: b64_json
+      timeout-ms: 60000
+    video:
+      provider: dify
+      base-url: ""
+      api-key: ""
+      model: ""
+      app-id: ""
+      workflow-id: ""
+      timeout-ms: 120000
   storage:
     provider: local

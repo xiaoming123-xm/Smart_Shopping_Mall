@@ -65,17 +65,17 @@ function addProductImageToVideo() {
         videoForm.imageUrls.push(url);
     }
 }
-function onImageUpload(file) {
+async function onImageUpload(file) {
     const raw = file.raw;
     if (!raw)
         return;
-    imageForm.imageUrl = URL.createObjectURL(raw);
+    imageForm.imageUrl = await readFileAsDataUrl(raw);
 }
-function onVideoUpload(file) {
+async function onVideoUpload(file) {
     const raw = file.raw;
     if (!raw || videoForm.imageUrls.length >= 9)
         return;
-    videoForm.imageUrls.push(URL.createObjectURL(raw));
+    videoForm.imageUrls.push(await readFileAsDataUrl(raw));
 }
 function removeVideoImage(url) {
     videoForm.imageUrls = videoForm.imageUrls.filter((item) => item !== url);
@@ -164,6 +164,14 @@ async function copyVideoUrl() {
         return;
     await navigator.clipboard.writeText(videoTask.value.outputUrl);
     ElMessage.success("分享链接已复制");
+}
+function readFileAsDataUrl(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result || ""));
+        reader.onerror = () => reject(new Error("read file failed"));
+        reader.readAsDataURL(file);
+    });
 }
 onMounted(load);
 onBeforeUnmount(() => stopProgress.value?.());

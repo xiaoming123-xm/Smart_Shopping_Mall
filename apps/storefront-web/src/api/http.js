@@ -19,3 +19,6 @@ export function httpGet(url) {
 export function httpPost(url, data) {
     return request(url, { method: "POST", body: JSON.stringify(data ?? {}) });
 }
+export function httpDelete(url) {
+    return request(url, { method: "DELETE" });
+}

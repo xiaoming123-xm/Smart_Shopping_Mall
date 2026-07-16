@@ -26,3 +26,7 @@ export function httpGet<T>(url: string): Promise<T> {
 export function httpPost<T>(url: string, data?: unknown): Promise<T> {
   return request<T>(url, { method: "POST", body: JSON.stringify(data ?? {}) });
 }
+
+export function httpDelete<T>(url: string): Promise<T> {
+  return request<T>(url, { method: "DELETE" });
+}

@@ -1,8 +1,11 @@
 package com.smartmall.order.application;
 
+import com.smartmall.catalog.domain.repository.SpuRepository;
 import com.smartmall.common.api.ResultCode;
 import com.smartmall.common.exception.BizException;
 import com.smartmall.order.application.command.CreateOrderCommand;
+import com.smartmall.order.application.command.RefundHandleCommand;
+import com.smartmall.order.application.command.RefundRequestCommand;
 import com.smartmall.order.application.command.ReplyReviewCommand;
 import com.smartmall.order.application.command.ReviewOrderCommand;
 import com.smartmall.order.application.command.ShipOrderCommand;
@@ -11,7 +14,9 @@ import com.smartmall.order.application.dto.OrderDTO;
 import com.smartmall.order.application.dto.OrderItemDTO;
 import com.smartmall.order.domain.model.Order;
 import com.smartmall.order.domain.model.OrderItem;
+import com.smartmall.order.domain.model.UserMessage;
 import com.smartmall.order.domain.repository.OrderRepository;
+import com.smartmall.order.domain.repository.UserMessageRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -27,6 +32,8 @@ public class OrderAppService {
     private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     private final OrderRepository repo;
+    private final SpuRepository spuRepo;
+    private final UserMessageRepository userMessageRepo;
 
     public List<OrderDTO> list() {
         return repo.findAll().stream().map(this::toDTO).toList();
@@ -141,6 +148,42 @@ public class OrderAppService {
         return toDTO(o);
     }
 
+    /** 用户申请退款/退货: 只记录待处理申请，不直接回加库存。 */
+    public OrderDTO requestRefund(Long id, RefundRequestCommand cmd) {
+        Order o = load(id);
+        if (!"PAID".equals(o.getStatus()) && !"SHIPPED".equals(o.getStatus()) && !"RECEIVED".equals(o.getStatus())) {
+            throw new BizException(ResultCode.ORDER_STATE_INVALID);
+        }
+        o.setStatus("REFUND_REQUESTED");
+        String reason = cmd == null ? null : cmd.getReason();
+        o.setRefundReason(reason == null || reason.isBlank() ? "用户申请退款/退货" : reason);
+        o.setRefundRequestedAt(LocalDateTime.now());
+        repo.save(o);
+        return toDTO(o);
+    }
+
+    /** 商家处理退货：同意只退款并通知用户，不自动回补库存，后续由库存入库人工处理。 */
+    public OrderDTO handleRefund(Long id, RefundHandleCommand cmd) {
+        Order o = load(id);
+        requireStatus(o, "REFUND_REQUESTED");
+        String action = cmd == null || cmd.getAction() == null ? "APPROVE" : cmd.getAction().trim().toUpperCase();
+        String note = cmd == null ? null : cmd.getNote();
+        if ("REJECT".equals(action) || "REJECTED".equals(action)) {
+            o.setStatus("REFUND_REJECTED");
+            o.setRefundHandleNote(note == null || note.isBlank() ? "商家已拒绝退货申请" : note);
+            o.setRefundHandledAt(LocalDateTime.now());
+            repo.save(o);
+            saveRefundMessage(o, "退货申请未通过", o.getRefundHandleNote());
+            return toDTO(o);
+        }
+        o.setStatus("REFUNDED");
+        o.setRefundHandleNote(note == null || note.isBlank() ? "商家已同意退货，钱已退回。" : note);
+        o.setRefundHandledAt(LocalDateTime.now());
+        repo.save(o);
+        saveRefundMessage(o, "退货退款已完成", "商家已同意退货，钱已退回。");
+        return toDTO(o);
+    }
+
     /** 评价: 仅当已收货, 评价后订单完成。 */
     public OrderDTO review(Long id, ReviewOrderCommand cmd) {
         Order o = load(id);
@@ -162,6 +205,7 @@ public class OrderAppService {
         o.setReviewReply(cmd.getReply());
         o.setReviewRepliedAt(LocalDateTime.now());
         repo.save(o);
+        saveReviewReplyMessage(o);
         return toDTO(o);
     }
 
@@ -177,6 +221,36 @@ public class OrderAppService {
         if (!expected.equals(o.getStatus())) {
             throw new BizException(ResultCode.ORDER_STATE_INVALID);
         }
+    }
+
+    private void saveReviewReplyMessage(Order order) {
+        UserMessage message = new UserMessage();
+        message.setMemberId(order.getMemberId() == null ? 1L : order.getMemberId());
+        message.setOrderId(order.getId());
+        message.setBusinessKey("review-reply:" + order.getId());
+        message.setType("REVIEW_REPLY");
+        message.setTitle("订单 " + order.getOrderNo() + " 收到商家回复");
+        message.setContent(order.getReviewReply());
+        message.setActionText("查看订单");
+        message.setActionUrl("/order");
+        message.setReadFlag(false);
+        message.setVisible(true);
+        userMessageRepo.saveOrUpdateByBusinessKey(message);
+    }
+
+    private void saveRefundMessage(Order order, String title, String content) {
+        UserMessage message = new UserMessage();
+        message.setMemberId(order.getMemberId() == null ? 1L : order.getMemberId());
+        message.setOrderId(order.getId());
+        message.setBusinessKey("refund-handle:" + order.getId());
+        message.setType("ORDER_STATUS");
+        message.setTitle(title + " - 订单 " + order.getOrderNo());
+        message.setContent(content);
+        message.setActionText("查看订单");
+        message.setActionUrl("/order");
+        message.setReadFlag(false);
+        message.setVisible(true);
+        userMessageRepo.saveOrUpdateByBusinessKey(message);
     }
 
     private OrderDTO toDTO(Order o) {
@@ -202,6 +276,10 @@ public class OrderAppService {
         d.setReviewedAt(o.getReviewedAt());
         d.setReviewReply(o.getReviewReply());
         d.setReviewRepliedAt(o.getReviewRepliedAt());
+        d.setRefundReason(o.getRefundReason());
+        d.setRefundRequestedAt(o.getRefundRequestedAt());
+        d.setRefundHandleNote(o.getRefundHandleNote());
+        d.setRefundHandledAt(o.getRefundHandledAt());
         d.setCreatedAt(o.getCreatedAt());
         d.setLogisticsTraces(buildLogistics(o));
         if (o.getItems() != null) {
@@ -216,9 +294,21 @@ public class OrderAppService {
         d.setSkuId(it.getSkuId());
         d.setSkuCode(it.getSkuCode());
         d.setProductName(it.getProductName());
+        d.setImageUrl(resolveOrderItemImage(it));
         d.setPrice(it.getPrice());
         d.setQuantity(it.getQuantity());
         return d;
+    }
+
+    private String resolveOrderItemImage(OrderItem it) {
+        if (it == null || it.getSkuId() == null) {
+            return null;
+        }
+        return spuRepo.findSkuById(it.getSkuId())
+            .flatMap(sku -> sku.getSpuId() == null ? java.util.Optional.empty() : spuRepo.findById(sku.getSpuId()))
+            .map(spu -> spu.getMainImage())
+            .filter(image -> image != null && !image.isBlank())
+            .orElse(null);
     }
 
     private List<LogisticsTraceDTO> buildLogistics(Order o) {
@@ -248,6 +338,9 @@ public class OrderAppService {
         if ("RECEIVED".equals(status)) return "待评价";
         if ("COMPLETED".equals(status)) return "已完成";
         if ("CANCELLED".equals(status)) return "已取消";
+        if ("REFUND_REQUESTED".equals(status)) return "退货申请中";
+        if ("REFUNDED".equals(status)) return "已退款";
+        if ("REFUND_REJECTED".equals(status)) return "退货已拒绝";
         return status;
     }
 

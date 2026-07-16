@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
  * 领域层与应用层代码完全不用改（依赖倒置）。
  */
 @Repository
-@Profile("!mysql")
+@Profile("!local")
 public class InMemoryCategoryRepository implements CategoryRepository {
 
     private final Map<Long, Category> store = new ConcurrentHashMap<>();

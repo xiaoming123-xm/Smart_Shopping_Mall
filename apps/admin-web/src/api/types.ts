@@ -1,4 +1,4 @@
-// 与后端 DTO 严格对齐的前端类型（后续可由 OpenAPI codegen 替代、以后端为主源）
+// 与后端 DTO 严格对齐的前端类型（后续可由 OpenAPI codegen 替代，以后端为主源）
 
 // ---- auth ----
 export interface CaptchaDTO { captchaKey: string; imageBase64: string; }
@@ -24,8 +24,9 @@ export interface BrandDTO {
 // ---- catalog: attribute ----
 export interface AttributeValue { id?: number; attrId?: number; value: string; sort?: number | null; }
 export interface AttributeDTO {
-  id?: number; name: string; type?: string; searchable?: boolean | null;
+  id?: number; parentId?: number | null; name: string; type?: string; searchable?: boolean | null;
   required?: boolean | null; sort?: number | null; createdAt?: string; values?: AttributeValue[];
+  categoryIds?: number[]; children?: AttributeDTO[];
 }
 
 // ---- catalog: spu/sku ----
@@ -35,7 +36,7 @@ export interface SkuDTO {
 }
 export interface SpuDTO {
   id?: number; name: string; categoryId?: number | null; brandId?: number | null;
-  mainImage?: string; description?: string; price: number; costPrice?: number;
+  mainImage?: string; description?: string; attributesJson?: string; price: number; costPrice?: number;
   stock?: number; status?: number; sort?: number | null; createdAt?: string; skus?: SkuDTO[];
 }
 
@@ -50,19 +51,22 @@ export interface StockRecordDTO {
 }
 
 // ---- order ----
-export interface OrderItemDTO { id: number; skuId: number; skuCode: string; productName: string; price: number; quantity: number; }
+export interface OrderItemDTO { id: number; skuId: number; skuCode: string; productName: string; imageUrl?: string; price: number; quantity: number; }
 export interface LogisticsTraceDTO { time: string; content: string; }
 export interface OrderDTO {
   id: number; orderNo: string; memberId: number; status: string; statusText?: string; totalAmount: number;
   receiver: string; receiverPhone?: string; address: string;
   sender?: string; senderPhone?: string; senderAddress?: string; logisticsCompany?: string; trackingNo?: string;
   shippedAt?: string; receivedAt?: string; rating?: number; reviewContent?: string; reviewedAt?: string;
-  reviewReply?: string; reviewRepliedAt?: string; createdAt?: string; items?: OrderItemDTO[]; logisticsTraces?: LogisticsTraceDTO[];
+  reviewReply?: string; reviewRepliedAt?: string; refundReason?: string; refundRequestedAt?: string;
+  refundHandleNote?: string; refundHandledAt?: string;
+  createdAt?: string; items?: OrderItemDTO[]; logisticsTraces?: LogisticsTraceDTO[];
 }
 export interface ShipOrderRequest {
   sender: string; senderPhone: string; senderAddress: string; logisticsCompany: string; trackingNo: string;
 }
 export interface ReplyReviewRequest { reply: string; }
+export interface RefundHandleRequest { action: "APPROVE" | "REJECT"; note?: string; }
 
 // ---- payment ----
 export interface PaymentDTO {
@@ -78,14 +82,21 @@ export interface SelectionCategoryDTO {
 export interface SelectionProductDTO {
   id: number; categoryId: number; platform: string; sourceProductId?: string;
   productName: string; imageUrl?: string; sourceUrl?: string; sales7d: number;
-  avgPrice: number; profitEstimate: number; trendTag?: string;
+  avgPrice: number; salesAmount?: number; profitEstimate: number; trendTag?: string;
   competitionLevel?: string; rankNo: number; fetchedAt?: string;
 }
-export interface StartSelectionCrawlerRequest { categoryId?: number | null; keyword?: string; }
+export interface StartSelectionCrawlerRequest { categoryId?: number | null; keyword?: string; limit?: number | null; }
+export interface PddCrawlerSessionDTO {
+  ready: boolean; profileExists: boolean; loginWindowOpened: boolean; confirmedAt?: string;
+  loginUrl: string; message: string;
+}
 export interface CrawlerTaskDTO {
   taskId: string; platform: string; categoryId?: number | null; keyword?: string;
   status: string; triggerType: string; startedAt?: string; finishedAt?: string;
   totalCount: number; successCount: number; failReason?: string; retryCount: number;
+  antiCrawlStatus?: string; anomalyCount?: number; blockSignalCount?: number; backoffCount?: number;
+  proxyEnabled?: boolean; observedUserAgent?: string; avgDelayMs?: number; maxDelayMs?: number;
+  antiCrawlEvidence?: string;
   createdBy?: string; createdAt?: string;
 }
 
@@ -100,6 +111,12 @@ export interface GenerateVideoResponse { taskId: string; status: string; progres
 export interface AiTaskDTO {
   taskId: string; productId: number; taskType: string; status: string; progress: number;
   provider?: string; outputUrl?: string; failReason?: string; createdAt?: string; updatedAt?: string;
+}
+export interface AiPromptDTO {
+  id?: number; code: string; category: string; title: string; content: string; enabled: boolean; updatedAt?: string;
+}
+export interface SaveAiPromptRequest {
+  category: string; title: string; content: string; enabled?: boolean;
 }
 
 // ---- system ----

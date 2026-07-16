@@ -9,33 +9,58 @@ const p = ref();
 const qty = ref(1);
 const tip = ref("");
 const activeImage = ref("");
-const selectedVariant = ref("");
+const selectedVariantLabel = ref("");
+const selectedVariant = ref(null);
+const infoEl = ref();
 const money = (n) => Number(n).toFixed(2);
 async function load() {
     p.value = await getProductDetail(Number(route.params.id));
+    qty.value = 1;
     await nextTick();
     activeImage.value = p.value?.images[0] || p.value?.cover || "";
-    selectedVariant.value = p.value?.variants[0]?.label || "";
+    const firstVariant = p.value?.variants[0] || null;
+    selectedVariant.value = firstVariant;
+    selectedVariantLabel.value = firstVariant?.label || "";
+    focusPurchaseAreaIfNeeded();
 }
-function selectVariant(label, image) {
-    selectedVariant.value = label;
-    activeImage.value = image;
+function selectVariant(variant) {
+    selectedVariant.value = variant;
+    selectedVariantLabel.value = variant.label;
+    activeImage.value = variant.image;
+}
+function buildSelectedProduct() {
+    if (!p.value)
+        return null;
+    return {
+        ...p.value,
+        skuId: selectedVariant.value?.skuId || p.value.skuId,
+        skuCode: selectedVariant.value?.skuCode || p.value.skuCode,
+        variants: selectedVariant.value ? [selectedVariant.value] : p.value.variants,
+    };
 }
 function addCart() {
-    if (!p.value)
+    const product = buildSelectedProduct();
+    if (!product)
         return;
-    cart.add(p.value, qty.value);
+    cart.add(product, qty.value);
     tip.value = "已加入购物车";
-    setTimeout(() => tip.value = "", 1500);
+    setTimeout(() => (tip.value = ""), 1500);
 }
 function buyNow() {
-    if (!p.value)
+    const product = buildSelectedProduct();
+    if (!product)
         return;
-    cart.add(p.value, qty.value);
+    cart.add(product, qty.value);
     router.push("/cart");
+}
+function focusPurchaseAreaIfNeeded() {
+    if (route.query.from !== "ai")
+        return;
+    infoEl.value?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 onMounted(load);
 watch(() => route.params.id, load);
+watch(() => route.query.from, () => nextTick(focusPurchaseAreaIfNeeded));
 debugger; /* PartiallyEnd: #3632/scriptSetup.vue */
 const __VLS_ctx = {};
 let __VLS_components;
@@ -92,8 +117,10 @@ if (__VLS_ctx.p) {
         alt: (__VLS_ctx.p.name),
     });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.section, __VLS_intrinsicElements.section)({
+        ref: "infoEl",
         ...{ class: "info" },
     });
+    /** @type {typeof __VLS_ctx.infoEl} */ ;
     __VLS_asFunctionalElement(__VLS_intrinsicElements.h1, __VLS_intrinsicElements.h1)({});
     (__VLS_ctx.p.name);
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
@@ -111,10 +138,10 @@ if (__VLS_ctx.p) {
             ...{ onClick: (...[$event]) => {
                     if (!(__VLS_ctx.p))
                         return;
-                    __VLS_ctx.selectVariant(v.label, v.image);
+                    __VLS_ctx.selectVariant(v);
                 } },
-            key: (v.label),
-            ...{ class: ({ on: __VLS_ctx.selectedVariant === v.label }) },
+            key: (`${v.label}-${v.skuId || ''}`),
+            ...{ class: ({ on: __VLS_ctx.selectedVariantLabel === v.label }) },
         });
         __VLS_asFunctionalElement(__VLS_intrinsicElements.img)({
             src: (v.image),
@@ -224,7 +251,8 @@ const __VLS_self = (await import('vue')).defineComponent({
             qty: qty,
             tip: tip,
             activeImage: activeImage,
-            selectedVariant: selectedVariant,
+            selectedVariantLabel: selectedVariantLabel,
+            infoEl: infoEl,
             money: money,
             selectVariant: selectVariant,
             addCart: addCart,

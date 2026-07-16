@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-@Profile("mysql")
+@Profile("local")
 public class JdbcSpuRepository implements SpuRepository {
     private final JdbcTemplate jdbc;
 
@@ -28,6 +28,7 @@ public class JdbcSpuRepository implements SpuRepository {
         s.setBrandId((Long) rs.getObject("brand_id"));
         s.setMainImage(rs.getString("main_image"));
         s.setDescription(rs.getString("description"));
+        s.setAttributesJson(rs.getString("attributes_json"));
         s.setPrice(rs.getBigDecimal("price"));
         s.setCostPrice(rs.getBigDecimal("cost_price"));
         s.setStock(rs.getInt("stock"));
@@ -63,8 +64,8 @@ public class JdbcSpuRepository implements SpuRepository {
             KeyHolder kh = new GeneratedKeyHolder();
             jdbc.update(conn -> {
                 PreparedStatement ps = conn.prepareStatement("""
-                        INSERT INTO catalog_spu(name, category_id, brand_id, main_image, description, price, cost_price, stock, status, sort)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        INSERT INTO catalog_spu(name, category_id, brand_id, main_image, description, attributes_json, price, cost_price, stock, status, sort)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                         """, Statement.RETURN_GENERATED_KEYS);
                 bindSpu(ps, s);
                 return ps;
@@ -74,9 +75,9 @@ public class JdbcSpuRepository implements SpuRepository {
         }
         jdbc.update("""
                 UPDATE catalog_spu
-                SET name=?, category_id=?, brand_id=?, main_image=?, description=?, price=?, cost_price=?, stock=?, status=?, sort=?
+                SET name=?, category_id=?, brand_id=?, main_image=?, description=?, attributes_json=?, price=?, cost_price=?, stock=?, status=?, sort=?
                 WHERE id=?
-                """, s.getName(), s.getCategoryId(), s.getBrandId(), s.getMainImage(), s.getDescription(),
+                """, s.getName(), s.getCategoryId(), s.getBrandId(), s.getMainImage(), s.getDescription(), s.getAttributesJson(),
                 s.getPrice(), s.getCostPrice(), s.getStock(), s.getStatus(), s.getSort(), s.getId());
         return findById(s.getId()).orElse(s);
     }
@@ -87,11 +88,12 @@ public class JdbcSpuRepository implements SpuRepository {
         ps.setObject(3, s.getBrandId());
         ps.setString(4, s.getMainImage());
         ps.setString(5, s.getDescription());
-        ps.setBigDecimal(6, s.getPrice());
-        ps.setBigDecimal(7, s.getCostPrice());
-        ps.setObject(8, s.getStock());
-        ps.setObject(9, s.getStatus());
-        ps.setObject(10, s.getSort());
+        ps.setString(6, s.getAttributesJson());
+        ps.setBigDecimal(7, s.getPrice());
+        ps.setBigDecimal(8, s.getCostPrice());
+        ps.setObject(9, s.getStock());
+        ps.setObject(10, s.getStatus());
+        ps.setObject(11, s.getSort());
     }
 
     @Override
@@ -102,6 +104,16 @@ public class JdbcSpuRepository implements SpuRepository {
     @Override
     public List<Spu> findAll() {
         return jdbc.query("SELECT * FROM catalog_spu ORDER BY sort ASC, id DESC", spuMapper);
+    }
+
+    @Override
+    public List<Spu> findByCategoryIds(List<Long> categoryIds) {
+        if (categoryIds == null || categoryIds.isEmpty()) {
+            return findAll();
+        }
+        String placeholders = String.join(",", categoryIds.stream().map(id -> "?").toList());
+        String sql = "SELECT * FROM catalog_spu WHERE category_id IN (" + placeholders + ") ORDER BY sort ASC, id DESC";
+        return jdbc.query(sql, spuMapper, categoryIds.toArray());
     }
 
     @Override

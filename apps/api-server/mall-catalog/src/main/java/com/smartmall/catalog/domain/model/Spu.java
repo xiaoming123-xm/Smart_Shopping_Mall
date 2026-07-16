@@ -9,6 +9,7 @@ import java.time.LocalDateTime;
     private Long brandId;
     private String mainImage;
     private String description;
+    private String attributesJson;
     private BigDecimal price;        // 销售价(展示)
     private BigDecimal costPrice;    // 成本价(财务增强预留)
     private Integer stock;           // 冗余库存(展示用,真实库存在 mall-inventory)

@@ -1,0 +1,21 @@
+ALTER TABLE shop_order ADD COLUMN receiver_phone VARCHAR(32) NULL COMMENT '收货人手机号' AFTER receiver;
+ALTER TABLE shop_order ADD COLUMN sender VARCHAR(64) NULL COMMENT '发货人' AFTER address;
+ALTER TABLE shop_order ADD COLUMN sender_phone VARCHAR(32) NULL COMMENT '发货人手机号' AFTER sender;
+ALTER TABLE shop_order ADD COLUMN sender_address VARCHAR(255) NULL COMMENT '发货地址' AFTER sender_phone;
+ALTER TABLE shop_order ADD COLUMN logistics_company VARCHAR(64) NULL COMMENT '物流公司' AFTER sender_address;
+ALTER TABLE shop_order ADD COLUMN tracking_no VARCHAR(64) NULL COMMENT '物流单号' AFTER logistics_company;
+ALTER TABLE shop_order ADD COLUMN shipped_at DATETIME NULL COMMENT '发货时间' AFTER tracking_no;
+ALTER TABLE shop_order ADD COLUMN received_at DATETIME NULL COMMENT '确认收货时间' AFTER shipped_at;
+ALTER TABLE shop_order ADD COLUMN rating INT NULL COMMENT '评分' AFTER received_at;
+ALTER TABLE shop_order ADD COLUMN review_content TEXT NULL COMMENT '评价内容' AFTER rating;
+ALTER TABLE shop_order ADD COLUMN reviewed_at DATETIME NULL COMMENT '评价时间' AFTER review_content;
+ALTER TABLE shop_order ADD COLUMN review_reply VARCHAR(500) NULL COMMENT '商家回复' AFTER reviewed_at;
+ALTER TABLE shop_order ADD COLUMN review_replied_at DATETIME NULL COMMENT '商家回复时间' AFTER review_reply;
+
+ALTER TABLE shop_order COMMENT='商城订单主表，保存用户下单后的订单状态、金额、收发货与评价信息';
+ALTER TABLE shop_order_item COMMENT='商城订单明细表，保存订单中的商品 SKU、名称、单价与数量';
+ALTER TABLE pay_payment COMMENT='支付流水表，保存订单支付单、支付渠道、金额与支付状态';
+ALTER TABLE ai_generation_tasks COMMENT='AI 内容生成任务表，保存商品图/视频生成任务状态、供应商与失败原因';
+ALTER TABLE ai_generated_assets COMMENT='AI 生成结果表，保存生成后的图片/视频地址与提示词、模式等信息';
+ALTER TABLE ai_chat_message COMMENT='AI 购物助手聊天记录表，保存用户与助手对话内容';
+ALTER TABLE ai_user_preference COMMENT='AI 用户偏好表，保存从对话中提炼出的用户偏好键值';

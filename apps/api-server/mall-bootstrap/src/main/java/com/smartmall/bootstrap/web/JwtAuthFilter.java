@@ -34,8 +34,10 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     /** 白名单前缀：无需登录即可访问。 */
     private static final List<String> WHITELIST = List.of(
             "/api/auth/",
+            "/api/catalog/categories",
             "/api/catalog/products",
             "/api/orders",
+            "/api/messages",
             "/api/payments",
             "/api/ai/shopping-guide",
             "/api/ai/product-qa",

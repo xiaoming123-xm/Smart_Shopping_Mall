@@ -171,25 +171,46 @@ __VLS_31.slots.default;
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "goods" },
     });
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: "cover" },
-    });
+    if (row.items?.[0]?.imageUrl) {
+        const __VLS_32 = {}.ElImage;
+        /** @type {[typeof __VLS_components.ElImage, typeof __VLS_components.elImage, ]} */ ;
+        // @ts-ignore
+        const __VLS_33 = __VLS_asFunctionalComponent(__VLS_32, new __VLS_32({
+            ...{ class: "cover" },
+            src: (row.items[0].imageUrl),
+            fit: "cover",
+            previewSrcList: ([row.items[0].imageUrl]),
+            previewTeleported: true,
+        }));
+        const __VLS_34 = __VLS_33({
+            ...{ class: "cover" },
+            src: (row.items[0].imageUrl),
+            fit: "cover",
+            previewSrcList: ([row.items[0].imageUrl]),
+            previewTeleported: true,
+        }, ...__VLS_functionalComponentArgsRest(__VLS_33));
+    }
+    else {
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "cover empty-cover" },
+        });
+    }
     __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
     (row.items?.[0]?.productName || "-");
 }
 var __VLS_31;
-const __VLS_32 = {}.ElTableColumn;
+const __VLS_36 = {}.ElTableColumn;
 /** @type {[typeof __VLS_components.ElTableColumn, typeof __VLS_components.elTableColumn, typeof __VLS_components.ElTableColumn, typeof __VLS_components.elTableColumn, ]} */ ;
 // @ts-ignore
-const __VLS_33 = __VLS_asFunctionalComponent(__VLS_32, new __VLS_32({
+const __VLS_37 = __VLS_asFunctionalComponent(__VLS_36, new __VLS_36({
     label: "评论内容",
 }));
-const __VLS_34 = __VLS_33({
+const __VLS_38 = __VLS_37({
     label: "评论内容",
-}, ...__VLS_functionalComponentArgsRest(__VLS_33));
-__VLS_35.slots.default;
+}, ...__VLS_functionalComponentArgsRest(__VLS_37));
+__VLS_39.slots.default;
 {
-    const { default: __VLS_thisSlot } = __VLS_35.slots;
+    const { default: __VLS_thisSlot } = __VLS_39.slots;
     const [{ row }] = __VLS_getSlotParams(__VLS_thisSlot);
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "comment" },
@@ -211,135 +232,135 @@ __VLS_35.slots.default;
         });
     }
     if (row.reviewReply) {
-        const __VLS_36 = {}.ElAlert;
+        const __VLS_40 = {}.ElAlert;
         /** @type {[typeof __VLS_components.ElAlert, typeof __VLS_components.elAlert, ]} */ ;
         // @ts-ignore
-        const __VLS_37 = __VLS_asFunctionalComponent(__VLS_36, new __VLS_36({
+        const __VLS_41 = __VLS_asFunctionalComponent(__VLS_40, new __VLS_40({
             title: (`商家回复：${row.reviewReply}`),
             type: "success",
             closable: (false),
         }));
-        const __VLS_38 = __VLS_37({
+        const __VLS_42 = __VLS_41({
             title: (`商家回复：${row.reviewReply}`),
             type: "success",
             closable: (false),
-        }, ...__VLS_functionalComponentArgsRest(__VLS_37));
+        }, ...__VLS_functionalComponentArgsRest(__VLS_41));
     }
 }
-var __VLS_35;
-const __VLS_40 = {}.ElTableColumn;
+var __VLS_39;
+const __VLS_44 = {}.ElTableColumn;
 /** @type {[typeof __VLS_components.ElTableColumn, typeof __VLS_components.elTableColumn, typeof __VLS_components.ElTableColumn, typeof __VLS_components.elTableColumn, ]} */ ;
 // @ts-ignore
-const __VLS_41 = __VLS_asFunctionalComponent(__VLS_40, new __VLS_40({
+const __VLS_45 = __VLS_asFunctionalComponent(__VLS_44, new __VLS_44({
     label: "操作",
     width: "120",
 }));
-const __VLS_42 = __VLS_41({
+const __VLS_46 = __VLS_45({
     label: "操作",
     width: "120",
-}, ...__VLS_functionalComponentArgsRest(__VLS_41));
-__VLS_43.slots.default;
+}, ...__VLS_functionalComponentArgsRest(__VLS_45));
+__VLS_47.slots.default;
 {
-    const { default: __VLS_thisSlot } = __VLS_43.slots;
+    const { default: __VLS_thisSlot } = __VLS_47.slots;
     const [{ row }] = __VLS_getSlotParams(__VLS_thisSlot);
-    const __VLS_44 = {}.ElButton;
+    const __VLS_48 = {}.ElButton;
     /** @type {[typeof __VLS_components.ElButton, typeof __VLS_components.elButton, typeof __VLS_components.ElButton, typeof __VLS_components.elButton, ]} */ ;
     // @ts-ignore
-    const __VLS_45 = __VLS_asFunctionalComponent(__VLS_44, new __VLS_44({
+    const __VLS_49 = __VLS_asFunctionalComponent(__VLS_48, new __VLS_48({
         ...{ 'onClick': {} },
         link: true,
         type: "primary",
     }));
-    const __VLS_46 = __VLS_45({
+    const __VLS_50 = __VLS_49({
         ...{ 'onClick': {} },
         link: true,
         type: "primary",
-    }, ...__VLS_functionalComponentArgsRest(__VLS_45));
-    let __VLS_48;
-    let __VLS_49;
-    let __VLS_50;
-    const __VLS_51 = {
+    }, ...__VLS_functionalComponentArgsRest(__VLS_49));
+    let __VLS_52;
+    let __VLS_53;
+    let __VLS_54;
+    const __VLS_55 = {
         onClick: (...[$event]) => {
             __VLS_ctx.openReply(row);
         }
     };
-    __VLS_47.slots.default;
-    var __VLS_47;
+    __VLS_51.slots.default;
+    var __VLS_51;
 }
-var __VLS_43;
+var __VLS_47;
 var __VLS_23;
 var __VLS_3;
-const __VLS_52 = {}.ElDialog;
+const __VLS_56 = {}.ElDialog;
 /** @type {[typeof __VLS_components.ElDialog, typeof __VLS_components.elDialog, typeof __VLS_components.ElDialog, typeof __VLS_components.elDialog, ]} */ ;
 // @ts-ignore
-const __VLS_53 = __VLS_asFunctionalComponent(__VLS_52, new __VLS_52({
-    modelValue: (__VLS_ctx.replyVisible),
-    title: "回复评价",
-    width: "520px",
-}));
-const __VLS_54 = __VLS_53({
-    modelValue: (__VLS_ctx.replyVisible),
-    title: "回复评价",
-    width: "520px",
-}, ...__VLS_functionalComponentArgsRest(__VLS_53));
-__VLS_55.slots.default;
-const __VLS_56 = {}.ElInput;
-/** @type {[typeof __VLS_components.ElInput, typeof __VLS_components.elInput, ]} */ ;
-// @ts-ignore
 const __VLS_57 = __VLS_asFunctionalComponent(__VLS_56, new __VLS_56({
-    modelValue: (__VLS_ctx.replyText),
-    type: "textarea",
-    rows: (5),
-    placeholder: "请输入商家回复",
+    modelValue: (__VLS_ctx.replyVisible),
+    title: "回复评价",
+    width: "520px",
 }));
 const __VLS_58 = __VLS_57({
+    modelValue: (__VLS_ctx.replyVisible),
+    title: "回复评价",
+    width: "520px",
+}, ...__VLS_functionalComponentArgsRest(__VLS_57));
+__VLS_59.slots.default;
+const __VLS_60 = {}.ElInput;
+/** @type {[typeof __VLS_components.ElInput, typeof __VLS_components.elInput, ]} */ ;
+// @ts-ignore
+const __VLS_61 = __VLS_asFunctionalComponent(__VLS_60, new __VLS_60({
     modelValue: (__VLS_ctx.replyText),
     type: "textarea",
     rows: (5),
     placeholder: "请输入商家回复",
-}, ...__VLS_functionalComponentArgsRest(__VLS_57));
+}));
+const __VLS_62 = __VLS_61({
+    modelValue: (__VLS_ctx.replyText),
+    type: "textarea",
+    rows: (5),
+    placeholder: "请输入商家回复",
+}, ...__VLS_functionalComponentArgsRest(__VLS_61));
 {
-    const { footer: __VLS_thisSlot } = __VLS_55.slots;
-    const __VLS_60 = {}.ElButton;
+    const { footer: __VLS_thisSlot } = __VLS_59.slots;
+    const __VLS_64 = {}.ElButton;
     /** @type {[typeof __VLS_components.ElButton, typeof __VLS_components.elButton, typeof __VLS_components.ElButton, typeof __VLS_components.elButton, ]} */ ;
     // @ts-ignore
-    const __VLS_61 = __VLS_asFunctionalComponent(__VLS_60, new __VLS_60({
+    const __VLS_65 = __VLS_asFunctionalComponent(__VLS_64, new __VLS_64({
         ...{ 'onClick': {} },
     }));
-    const __VLS_62 = __VLS_61({
+    const __VLS_66 = __VLS_65({
         ...{ 'onClick': {} },
-    }, ...__VLS_functionalComponentArgsRest(__VLS_61));
-    let __VLS_64;
-    let __VLS_65;
-    let __VLS_66;
-    const __VLS_67 = {
+    }, ...__VLS_functionalComponentArgsRest(__VLS_65));
+    let __VLS_68;
+    let __VLS_69;
+    let __VLS_70;
+    const __VLS_71 = {
         onClick: (...[$event]) => {
             __VLS_ctx.replyVisible = false;
         }
     };
-    __VLS_63.slots.default;
-    var __VLS_63;
-    const __VLS_68 = {}.ElButton;
+    __VLS_67.slots.default;
+    var __VLS_67;
+    const __VLS_72 = {}.ElButton;
     /** @type {[typeof __VLS_components.ElButton, typeof __VLS_components.elButton, typeof __VLS_components.ElButton, typeof __VLS_components.elButton, ]} */ ;
     // @ts-ignore
-    const __VLS_69 = __VLS_asFunctionalComponent(__VLS_68, new __VLS_68({
+    const __VLS_73 = __VLS_asFunctionalComponent(__VLS_72, new __VLS_72({
         ...{ 'onClick': {} },
         type: "primary",
     }));
-    const __VLS_70 = __VLS_69({
+    const __VLS_74 = __VLS_73({
         ...{ 'onClick': {} },
         type: "primary",
-    }, ...__VLS_functionalComponentArgsRest(__VLS_69));
-    let __VLS_72;
-    let __VLS_73;
-    let __VLS_74;
-    const __VLS_75 = {
+    }, ...__VLS_functionalComponentArgsRest(__VLS_73));
+    let __VLS_76;
+    let __VLS_77;
+    let __VLS_78;
+    const __VLS_79 = {
         onClick: (__VLS_ctx.submitReply)
     };
-    __VLS_71.slots.default;
-    var __VLS_71;
+    __VLS_75.slots.default;
+    var __VLS_75;
 }
-var __VLS_55;
+var __VLS_59;
 /** @type {__VLS_StyleScopedClasses['page']} */ ;
 /** @type {__VLS_StyleScopedClasses['card-head']} */ ;
 /** @type {__VLS_StyleScopedClasses['filters']} */ ;
@@ -347,6 +368,8 @@ var __VLS_55;
 /** @type {__VLS_StyleScopedClasses['avatar']} */ ;
 /** @type {__VLS_StyleScopedClasses['goods']} */ ;
 /** @type {__VLS_StyleScopedClasses['cover']} */ ;
+/** @type {__VLS_StyleScopedClasses['cover']} */ ;
+/** @type {__VLS_StyleScopedClasses['empty-cover']} */ ;
 /** @type {__VLS_StyleScopedClasses['comment']} */ ;
 /** @type {__VLS_StyleScopedClasses['comment-head']} */ ;
 /** @type {__VLS_StyleScopedClasses['stars']} */ ;

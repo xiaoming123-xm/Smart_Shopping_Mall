@@ -26,6 +26,7 @@
           <el-menu-item index="/order/review">订单评价</el-menu-item>
         </el-sub-menu>
         <el-menu-item index="/payment"><el-icon><Money /></el-icon><span>支付管理</span></el-menu-item>
+        <el-menu-item index="/payment/prompt"><el-icon><Document /></el-icon><span>提示词管理</span></el-menu-item>
         <el-sub-menu index="system">
           <template #title><el-icon><Setting /></el-icon><span>系统管理</span></template>
           <el-menu-item index="/system/user">用户管理</el-menu-item>
@@ -60,6 +61,7 @@ import { useRoute, useRouter } from "vue-router";
 import { ElMessageBox, ElMessage } from "element-plus";
 import { useAuthStore } from "@/stores/auth";
 import { logoutUseCase } from "@/use-cases/auth.uc";
+import { Document } from "@element-plus/icons-vue";
 
 const route = useRoute();
 const router = useRouter();

@@ -1,4 +1,4 @@
-﻿spring:
+spring:
   application:
     name: smart-mall-api
   profiles:
@@ -10,9 +10,45 @@ management:
       exposure:
         include: health,info
 
-# AI 妯″潡閰嶇疆(绗?灞傛ā鍨嬫帴鍏ュ眰)銆傞粯璁?mock 鍏滃簳, 鍙?崰鎹?deepseek/qwen/openai銆?mall:
+mall:
   ai:
-    provider: deepseek
+    provider: mock
     api-key: ""
     base-url: ""
     model: ""
+    chat:
+      provider: mock
+      base-url: ""
+      api-key: ""
+      model: ""
+      timeout-ms: 30000
+    image:
+      provider: mock
+      base-url: ""
+      api-key: ""
+      model: ""
+      size: 1024x1024
+      response-format: url
+      timeout-ms: 60000
+    video:
+      provider: mock
+      base-url: ""
+      api-key: ""
+      app-id: ""
+      workflow-id: ""
+      timeout-ms: 120000
+  selection:
+    crawler:
+      python: python
+      script: tools/crawler/pdd_selection_spider.py
+      limit: 100
+      require-login: true
+      session-dir: work/crawler/pdd-browser-profile
+      remote-debugging-port: ${PDD_CRAWLER_DEBUG_PORT:9223}
+      login-url: https://mobile.yangkeduo.com/
+      chrome-command: ${PDD_CRAWLER_CHROME:}
+      firecrawl:
+        enabled: ${FIRECRAWL_ENABLED:false}
+        base-url: ${FIRECRAWL_BASE_URL:http://localhost:3002}
+        script: tools/external-services/firecrawl/firecrawl_selection_runner.py
+        data-dir: tools/external-services/firecrawl/data

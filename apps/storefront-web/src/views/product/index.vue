@@ -9,12 +9,17 @@
       <img class="main-img" :src="activeImage" :alt="p.name" />
     </section>
 
-    <section class="info">
+    <section ref="infoEl" class="info">
       <h1>{{ p.name }}</h1>
       <div class="price">¥{{ money(p.price) }}</div>
-      <div class="label">颜色分类</div>
+      <div class="label">规格</div>
       <div class="variants">
-        <button v-for="v in p.variants" :key="v.label" :class="{ on: selectedVariant === v.label }" @click="selectVariant(v.label, v.image)">
+        <button
+          v-for="v in p.variants"
+          :key="`${v.label}-${v.skuId || ''}`"
+          :class="{ on: selectedVariantLabel === v.label }"
+          @click="selectVariant(v)"
+        >
           <img :src="v.image" :alt="v.label" />
           <span>{{ v.label }}</span>
         </button>
@@ -22,9 +27,9 @@
       <div class="stock">库存 <b>{{ p.stock }}</b></div>
       <div class="label">数量</div>
       <div class="qty">
-        <button @click="qty = Math.max(1, qty - 1)">−</button>
+        <button @click="qty = Math.max(1, qty - 1)">-</button>
         <span>{{ qty }}</span>
-        <button @click="qty++">＋</button>
+        <button @click="qty++">+</button>
       </div>
       <div class="actions">
         <button class="add" @click="addCart">加入购物车</button>
@@ -47,7 +52,7 @@
 <script setup lang="ts">
 import { nextTick, onMounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import type { Product } from "@/api/mock";
+import type { Product, ProductVariant } from "@/api/mock";
 import { getProductDetail } from "@/api/mall";
 import { useCartStore } from "@/stores/cart";
 
@@ -58,36 +63,61 @@ const p = ref<Product>();
 const qty = ref(1);
 const tip = ref("");
 const activeImage = ref("");
-const selectedVariant = ref("");
+const selectedVariantLabel = ref("");
+const selectedVariant = ref<ProductVariant | null>(null);
+const infoEl = ref<HTMLElement>();
 const money = (n: number) => Number(n).toFixed(2);
 
 async function load() {
   p.value = await getProductDetail(Number(route.params.id));
+  qty.value = 1;
   await nextTick();
   activeImage.value = p.value?.images[0] || p.value?.cover || "";
-  selectedVariant.value = p.value?.variants[0]?.label || "";
+  const firstVariant = p.value?.variants[0] || null;
+  selectedVariant.value = firstVariant;
+  selectedVariantLabel.value = firstVariant?.label || "";
+  focusPurchaseAreaIfNeeded();
 }
 
-function selectVariant(label: string, image: string) {
-  selectedVariant.value = label;
-  activeImage.value = image;
+function selectVariant(variant: ProductVariant) {
+  selectedVariant.value = variant;
+  selectedVariantLabel.value = variant.label;
+  activeImage.value = variant.image;
+}
+
+function buildSelectedProduct(): Product | null {
+  if (!p.value) return null;
+  return {
+    ...p.value,
+    skuId: selectedVariant.value?.skuId || p.value.skuId,
+    skuCode: selectedVariant.value?.skuCode || p.value.skuCode,
+    variants: selectedVariant.value ? [selectedVariant.value] : p.value.variants,
+  };
 }
 
 function addCart() {
-  if (!p.value) return;
-  cart.add(p.value, qty.value);
+  const product = buildSelectedProduct();
+  if (!product) return;
+  cart.add(product, qty.value);
   tip.value = "已加入购物车";
-  setTimeout(() => tip.value = "", 1500);
+  setTimeout(() => (tip.value = ""), 1500);
 }
 
 function buyNow() {
-  if (!p.value) return;
-  cart.add(p.value, qty.value);
+  const product = buildSelectedProduct();
+  if (!product) return;
+  cart.add(product, qty.value);
   router.push("/cart");
+}
+
+function focusPurchaseAreaIfNeeded() {
+  if (route.query.from !== "ai") return;
+  infoEl.value?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 onMounted(load);
 watch(() => route.params.id, load);
+watch(() => route.query.from, () => nextTick(focusPurchaseAreaIfNeeded));
 </script>
 
 <style scoped>

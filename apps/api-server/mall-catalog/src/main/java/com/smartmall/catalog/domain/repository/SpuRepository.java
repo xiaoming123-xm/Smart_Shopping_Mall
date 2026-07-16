@@ -6,6 +6,7 @@ public interface SpuRepository {
     Spu save(Spu s);
     Optional<Spu> findById(Long id);
     List<Spu> findAll();
+    List<Spu> findByCategoryIds(List<Long> categoryIds);
     void deleteById(Long id);
     Sku saveSku(Sku sku);
     Optional<Sku> findSkuById(Long id);

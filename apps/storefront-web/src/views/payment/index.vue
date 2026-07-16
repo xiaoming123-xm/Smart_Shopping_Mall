@@ -3,7 +3,7 @@
     <div class="pay-logo"><span class="mark">支</span><b>支付宝</b><em>ALIPAY</em></div>
     <section class="order-strip">
       <div>
-        <p>正在使用即时到账交易，交易将在 4 分钟后关闭，请及时付款！</p>
+        <p>正在使用即时到账交易，交易将在 24 分钟后关闭，请及时付款。</p>
         <h2>{{ firstItemName }}</h2>
         <span>收款方：qlahij9146@sandbox.com</span>
       </div>
@@ -16,7 +16,7 @@
         <h3>扫码支付</h3>
         <img class="qr" src="/images/payment/alipay-demo-qr.png" alt="支付宝支付二维码" />
         <p>使用手机支付宝扫码完成付款</p>
-        <div class="links">手机支付宝下载　|　如何使用？</div>
+        <div class="links">手机支付宝下载 | 如何使用？</div>
       </div>
       <div class="login-area">
         <div class="login-title">
@@ -27,8 +27,8 @@
         <input placeholder="手机号/邮箱" />
         <label>支付密码：</label>
         <input type="password" placeholder="请输入账户的支付密码" />
-        <button :disabled="paying || order.status !== 'CREATED'" @click="doPay">
-          {{ paying ? "正在提交中..." : order.status === "CREATED" ? "下一步" : "已支付" }}
+        <button :disabled="paying || !order" @click="doPay">
+          {{ paying ? "正在提交中..." : order.status === "PAID" ? "查看订单" : "下一步" }}
         </button>
       </div>
     </section>
@@ -37,10 +37,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useOrderStore } from "@/stores/order";
 import { payOrder } from "@/use-cases/payOrder";
+import { syncOrdersFromBackend } from "@/use-cases/orderSync";
 
 const route = useRoute();
 const router = useRouter();
@@ -52,10 +53,24 @@ const money = (n: number) => Number(n).toFixed(2);
 
 async function doPay() {
   if (!order.value || paying.value) return;
+  if (order.value.status === "PAID") {
+    router.push("/order");
+    return;
+  }
   paying.value = true;
-  await payOrder(String(route.params.orderId), router);
-  paying.value = false;
+  try {
+    await payOrder(String(route.params.orderId), router);
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : "支付失败，请稍后重试";
+    window.alert(msg);
+  } finally {
+    paying.value = false;
+  }
 }
+
+onMounted(() => {
+  syncOrdersFromBackend().catch(() => null);
+});
 </script>
 
 <style scoped>

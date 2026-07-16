@@ -130,6 +130,22 @@ public class CategoryAppService {
         return roots;
     }
 
+    /** 分类本身及全部下级分类 ID，用于前台根分类筛选商品。 */
+    public List<Long> categoryAndDescendantIds(Long id) {
+        categoryRepository.findById(id)
+                .orElseThrow(() -> new BizException(ResultCode.CATEGORY_NOT_FOUND));
+        List<Long> ids = new ArrayList<>();
+        collectCategoryIds(id, ids);
+        return ids;
+    }
+
+    private void collectCategoryIds(Long id, List<Long> ids) {
+        ids.add(id);
+        for (Category child : categoryRepository.findByParentId(id)) {
+            collectCategoryIds(child.getId(), ids);
+        }
+    }
+
     private CategoryDTO toDTO(Category c) {
         CategoryDTO dto = new CategoryDTO();
         dto.setId(c.getId());

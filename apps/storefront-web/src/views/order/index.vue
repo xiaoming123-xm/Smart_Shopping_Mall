@@ -12,7 +12,8 @@
         <button v-for="t in tabs" :key="t.key" :class="{ on: active === t.key }" @click="active = t.key">{{ t.label }}</button>
       </div>
 
-      <div v-if="filtered.length" class="list">
+      <div v-if="syncing" class="empty">正在从 MySQL 加载订单...</div>
+      <div v-else-if="filtered.length" class="list">
         <article v-for="o in filtered" :key="o.id" class="order-card">
           <header>
             <span>{{ dateOnly(o.createdAt) }}</span>
@@ -21,12 +22,15 @@
           </header>
           <div class="order-body">
             <div class="goods">
-              <div v-for="it in o.items" :key="it.product.id" class="good">
+              <div v-for="it in o.items" :key="`${o.id}-${it.product.skuId || it.product.id}`" class="good">
                 <img :src="it.product.cover" :alt="it.product.name" />
                 <div>
                   <h3>{{ it.product.name }}</h3>
-                  <p>颜色分类：{{ it.product.variants[0]?.label || "默认款" }}</p>
-                  <button v-if="o.status === 'PAID'" @click="refundTip">退款</button>
+                  <p>规格：{{ it.product.variants[0]?.label || "默认款" }}</p>
+                  <button v-if="canRefund(o.status)" @click="requestRefund(o.id, it.product.name)">申请退货</button>
+                  <span v-else-if="o.status === 'REFUND_REQUESTED'" class="refund-state">退货处理中</span>
+                  <span v-else-if="o.status === 'REFUNDED'" class="refund-state success">商家已同意退货，钱已退回。</span>
+                  <span v-else-if="o.status === 'REFUND_REJECTED'" class="refund-state">退货未通过</span>
                 </div>
               </div>
             </div>
@@ -34,7 +38,6 @@
             <div class="paid">实付款 <b>¥{{ money(o.amount) }}</b></div>
             <div class="actions">
               <router-link v-if="o.status === 'CREATED'" :to="`/payment/${o.id}`" class="primary">去支付</router-link>
-              <button v-if="o.status === 'PAID'" class="primary" @click="ship(o.id)">模拟发货</button>
               <button v-if="o.status === 'SHIPPED'" class="primary" @click="receive(o.id)">确认收货</button>
               <button v-if="o.status === 'RECEIVED'" class="primary" @click="openReview(o.id)">去评价</button>
               <button v-if="o.logisticsTraces.length" @click="openLogistics(o.id)">查看物流</button>
@@ -74,9 +77,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { useOrderStore, type OrderRecord, type OrderStatus } from "@/stores/order";
-import { receiveOrderFlow, reviewOrderFlow, shipOrderFlow } from "@/use-cases/orderFlow";
+import { receiveOrderFlow, requestRefundFlow, reviewOrderFlow } from "@/use-cases/orderFlow";
+import { syncOrdersFromBackend } from "@/use-cases/orderSync";
 
 const orderStore = useOrderStore();
 const active = ref<"ALL" | OrderStatus>("ALL");
@@ -84,6 +88,7 @@ const logisticsId = ref("");
 const reviewId = ref("");
 const rating = ref(5);
 const reviewText = ref("东西很不错，很满意，下次还会光临。");
+const syncing = ref(true);
 
 const tabs: Array<{ key: "ALL" | OrderStatus; label: string }> = [
   { key: "ALL", label: "所有订单" },
@@ -91,19 +96,24 @@ const tabs: Array<{ key: "ALL" | OrderStatus; label: string }> = [
   { key: "PAID", label: "待发货" },
   { key: "SHIPPED", label: "待收货" },
   { key: "RECEIVED", label: "待评价" },
+  { key: "REFUND_REQUESTED", label: "退货中" },
 ];
 
-const filtered = computed(() => active.value === "ALL" ? orderStore.orders : orderStore.orders.filter((o) => o.status === active.value));
-const logisticsOrder = computed(() => logisticsId.value ? orderStore.getOrder(logisticsId.value) : undefined);
-const reviewOrder = computed(() => reviewId.value ? orderStore.getOrder(reviewId.value) : undefined);
+const filtered = computed(() => (active.value === "ALL" ? orderStore.orders : orderStore.orders.filter((o) => o.status === active.value)));
+const logisticsOrder = computed(() => (logisticsId.value ? orderStore.getOrder(logisticsId.value) : undefined));
+const reviewOrder = computed(() => (reviewId.value ? orderStore.getOrder(reviewId.value) : undefined));
 
 const money = (n: number) => Number(n).toFixed(2);
 const dateOnly = (v: string) => v.split(" ")[0] || v;
 const itemCount = (o: OrderRecord) => o.items.reduce((sum, it) => sum + it.qty, 0);
-const refundTip = () => window.alert("已提交模拟退款申请，后台可继续扩展退款审核流程。");
 
-async function ship(id: string) {
-  await shipOrderFlow(id);
+function canRefund(status: OrderStatus) {
+  return status === "PAID" || status === "SHIPPED" || status === "RECEIVED";
+}
+
+async function requestRefund(orderId: string, productName: string) {
+  await requestRefundFlow(orderId, productName);
+  window.alert("已提交退货/退款申请，等待商家处理。");
 }
 
 async function receive(id: string) {
@@ -125,12 +135,16 @@ async function submitReview() {
   await reviewOrderFlow(reviewId.value, rating.value, reviewText.value);
   reviewId.value = "";
 }
+
+onMounted(() => {
+  syncOrdersFromBackend().catch(() => null).finally(() => { syncing.value = false; });
+});
 </script>
 
 <style scoped>
 .orders { display: grid; grid-template-columns: 180px 1fr; gap: 24px; }
 .side { display: flex; flex-direction: column; gap: 20px; padding-top: 22px; font-size: 16px; }
-.side a { color: #333; }
+.side a { color: #333; text-decoration: none; }
 .side .active { color: #ef5d67; font-weight: 700; }
 .main { min-width: 0; }
 .tabs { display: flex; gap: 48px; height: 54px; align-items: center; border-bottom: 1px solid #ddd; margin-bottom: 22px; }
@@ -145,7 +159,9 @@ async function submitReview() {
 .good img { width: 78px; height: 78px; object-fit: cover; border-radius: 5px; background: #f5f5f5; }
 .good h3 { margin: 0 0 8px; color: #df6e72; font-size: 15px; }
 .good p { margin: 0 0 8px; color: #888; font-size: 13px; }
-.good button, .actions button, .actions a { border: 1px solid #e4e4e4; background: #fff; color: #666; padding: 6px 14px; border-radius: 4px; cursor: pointer; font-size: 14px; }
+.good button, .actions button, .actions a { border: 1px solid #e4e4e4; background: #fff; color: #666; padding: 6px 14px; border-radius: 4px; cursor: pointer; font-size: 14px; text-decoration: none; }
+.refund-state { display: inline-block; color: #d9822b; font-size: 13px; font-weight: 700; }
+.refund-state.success { color: #16a34a; }
 .price { color: #d61f3c; font-size: 16px; font-weight: 700; text-align: right; }
 .price small { display: block; color: #999; margin-top: 6px; }
 .paid { text-align: right; color: #333; }

@@ -1,6 +1,7 @@
 import { createBackendOrder } from "@/api/mall";
 import { useCartStore } from "@/stores/cart";
 import { useOrderStore } from "@/stores/order";
+import { syncOrdersFromBackend } from "./orderSync";
 export async function checkout(router) {
     const cart = useCartStore();
     const orderStore = useOrderStore();
@@ -8,6 +9,7 @@ export async function checkout(router) {
         return { ok: false, msg: "购物车为空" };
     const backendOrder = await createBackendOrder(cart.items, cart.total);
     const localOrder = orderStore.createOrder(cart.items, Number(backendOrder.totalAmount || cart.total), String(backendOrder.id), backendOrder.orderNo);
+    await syncOrdersFromBackend();
     cart.clear();
     router.push(`/payment/${localOrder.id}`);
     return { ok: true, orderId: localOrder.id };

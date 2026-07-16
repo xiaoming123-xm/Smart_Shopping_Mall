@@ -55,11 +55,11 @@ async function init() {
         ElMessage.error(e instanceof ApiError ? e.message : "加载商品失败");
     }
 }
-function onImageUpload(file) {
+async function onImageUpload(file) {
     const raw = file.raw;
     if (!raw)
         return;
-    imageForm.imageUrl = URL.createObjectURL(raw);
+    imageForm.imageUrl = await readFileAsDataUrl(raw);
 }
 async function onGenerateImage() {
     if (!product.value?.id || !imageForm.imageUrl) {
@@ -138,6 +138,14 @@ async function copyVideoUrl() {
         return;
     await navigator.clipboard.writeText(videoTask.value.outputUrl);
     ElMessage.success("分享链接已复制");
+}
+function readFileAsDataUrl(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result || ""));
+        reader.onerror = () => reject(new Error("read file failed"));
+        reader.readAsDataURL(file);
+    });
 }
 onMounted(init);
 onBeforeUnmount(() => stopProgress.value?.());

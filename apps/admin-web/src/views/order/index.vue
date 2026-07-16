@@ -1,8 +1,22 @@
 <template>
   <div class="page">
-    <div class="toolbar"><el-button :icon="Refresh" @click="load">刷新</el-button></div>
+    <div class="toolbar">
+      <el-button :icon="Refresh" @click="load">刷新</el-button>
+      <el-button v-if="refundOrders.length" type="warning" plain @click="showOnlyRefund = !showOnlyRefund">
+        {{ showOnlyRefund ? "查看全部订单" : `只看退货 ${refundOrders.length} 个` }}
+      </el-button>
+    </div>
+    <el-alert
+      v-if="refundOrders.length"
+      class="refund-alert"
+      type="warning"
+      :closable="false"
+      show-icon
+      :title="`待处理退货 ${refundOrders.length} 个`"
+      description="用户已提交退款/退货申请，需商家审核后再处理退款与入库。"
+    />
     <el-card v-loading="loading">
-      <el-table :data="list" border stripe>
+      <el-table :data="filteredList" border stripe>
         <el-table-column prop="orderNo" label="订单号" min-width="180" />
         <el-table-column prop="receiver" label="收货人" width="110" />
         <el-table-column prop="statusText" label="状态" width="110">
@@ -15,6 +29,8 @@
         <el-table-column label="操作" width="190" fixed="right">
           <template #default="{ row }">
             <el-button link type="primary" size="small" @click="openDetail(row)">详情</el-button>
+            <el-button link type="warning" size="small" :disabled="row.status !== 'REFUND_REQUESTED'" @click="onApproveRefund(row)">同意退货</el-button>
+            <el-button link type="danger" size="small" :disabled="row.status !== 'REFUND_REQUESTED'" @click="onRejectRefund(row)">拒绝退货</el-button>
             <el-button link type="success" size="small" :disabled="row.status !== 'PAID'" @click="openShip(row)">发货</el-button>
           </template>
         </el-table-column>
@@ -29,6 +45,15 @@
         <el-descriptions-item label="收货人">{{ detail?.receiver }} {{ detail?.receiverPhone }}</el-descriptions-item>
         <el-descriptions-item label="收货地址" :span="2">{{ detail?.address }}</el-descriptions-item>
         <el-descriptions-item label="物流" :span="2">{{ detail?.logisticsCompany || "-" }} {{ detail?.trackingNo || "" }}</el-descriptions-item>
+        <el-descriptions-item v-if="detail?.status === 'REFUND_REQUESTED'" label="退货备注" :span="2">
+          {{ detail?.refundReason || "用户申请退款/退货" }}
+        </el-descriptions-item>
+        <el-descriptions-item v-if="detail?.status === 'REFUND_REQUESTED'" label="申请时间" :span="2">
+          {{ formatTime(detail?.refundRequestedAt) || "-" }}
+        </el-descriptions-item>
+        <el-descriptions-item v-if="detail?.refundHandleNote" label="退货处理" :span="2">
+          {{ detail.refundHandleNote }} {{ formatTime(detail?.refundHandledAt) }}
+        </el-descriptions-item>
       </el-descriptions>
       <el-table :data="detail?.items || []" border size="small" style="margin-top:12px">
         <el-table-column prop="productName" label="商品" />
@@ -67,16 +92,17 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref } from "vue";
-import { ElMessage } from "element-plus";
+import { computed, reactive, ref } from "vue";
+import { ElMessage, ElMessageBox } from "element-plus";
 import { Refresh } from "@element-plus/icons-vue";
-import { loadOrder, loadOrders, shipOrder } from "@/use-cases/order.uc";
+import { approveRefund, loadOrder, loadOrders, rejectRefund, shipOrder } from "@/use-cases/order.uc";
 import type { OrderDTO, ShipOrderRequest } from "@/api";
 import { ApiError } from "@/api";
 
 const loading = ref(false);
 const shipping = ref(false);
 const list = ref<OrderDTO[]>([]);
+const showOnlyRefund = ref(false);
 const detailVisible = ref(false);
 const shipVisible = ref(false);
 const detail = ref<OrderDTO | null>(null);
@@ -88,6 +114,9 @@ const shipForm = reactive<ShipOrderRequest>({
   logisticsCompany: "顺丰速运",
   trackingNo: "SF123456465",
 });
+
+const refundOrders = computed(() => list.value.filter((order) => order.status === "REFUND_REQUESTED"));
+const filteredList = computed(() => (showOnlyRefund.value ? refundOrders.value : list.value));
 
 async function load() {
   loading.value = true;
@@ -123,11 +152,44 @@ async function submitShip() {
   }
 }
 
+async function onApproveRefund(row: OrderDTO) {
+  const confirmed = await ElMessageBox.confirm("确认同意退货并退款？同意后只退款，不会自动回补库存，商品需在库存管理里人工入库。", "同意退货", { type: "warning" }).then(() => true).catch(() => false);
+  if (!confirmed) return;
+  try {
+    await approveRefund(row.id, "商家已同意退货，钱已退回。");
+    ElMessage.success("已同意退货并退款");
+    await load();
+    if (detail.value?.id === row.id) detail.value = await loadOrder(row.id);
+  } catch (e) {
+    ElMessage.error(e instanceof ApiError ? e.message : "处理退货失败");
+  }
+}
+
+async function onRejectRefund(row: OrderDTO) {
+  const note = await ElMessageBox.prompt("请输入拒绝原因", "拒绝退货", { inputValue: "商品不符合退货条件", confirmButtonText: "拒绝", cancelButtonText: "取消", type: "warning" }).catch(() => null);
+  if (!note) return;
+  try {
+    await rejectRefund(row.id, note.value || "商家已拒绝退货申请");
+    ElMessage.success("已拒绝退货申请");
+    await load();
+    if (detail.value?.id === row.id) detail.value = await loadOrder(row.id);
+  } catch (e) {
+    ElMessage.error(e instanceof ApiError ? e.message : "处理退货失败");
+  }
+}
+
 function tagType(status: string) {
   if (status === "PAID") return "warning";
+  if (status === "REFUND_REQUESTED") return "danger";
+  if (status === "REFUNDED") return "success";
+  if (status === "REFUND_REJECTED") return "info";
   if (status === "SHIPPED") return "success";
   if (status === "COMPLETED") return "info";
   return "";
+}
+
+function formatTime(value?: string) {
+  return value ? value.replace("T", " ").slice(0, 19) : "";
 }
 
 load();
@@ -136,4 +198,5 @@ load();
 <style scoped>
 .page { display: flex; flex-direction: column; gap: 12px; }
 .toolbar { display: flex; gap: 8px; }
+.refund-alert { margin-bottom: 2px; }
 </style>

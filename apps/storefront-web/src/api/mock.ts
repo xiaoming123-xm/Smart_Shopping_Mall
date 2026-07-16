@@ -2,10 +2,14 @@
 export interface ProductVariant {
   label: string;
   image: string;
+  skuId?: number;
+  skuCode?: string;
 }
 
 export interface Product {
   id: number;
+  skuId?: number;
+  skuCode?: string;
   name: string;
   category: string;
   price: number;

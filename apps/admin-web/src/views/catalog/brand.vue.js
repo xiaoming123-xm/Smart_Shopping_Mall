@@ -3,11 +3,13 @@ import { ElMessage, ElMessageBox } from "element-plus";
 import { Plus, Refresh } from "@element-plus/icons-vue";
 import { loadBrands, saveBrand, deleteBrand } from "@/use-cases/brand.uc";
 import { ApiError } from "@/api";
+import { pickImageFile, readFileAsDataUrl } from "@/utils/imageUpload";
 const loading = ref(false);
 const saving = ref(false);
 const list = ref([]);
 const dialogVisible = ref(false);
 const form = reactive({ name: "", logo: "", description: "", sort: 0, enabled: true });
+const logoInput = ref(null);
 async function load() {
     loading.value = true;
     try {
@@ -23,6 +25,30 @@ async function load() {
 function reset() { Object.assign(form, { id: undefined, name: "", logo: "", description: "", sort: 0, enabled: true }); }
 function openCreate() { reset(); dialogVisible.value = true; }
 function openEdit(row) { Object.assign(form, { ...row, enabled: row.enabled !== false }); dialogVisible.value = true; }
+function triggerLogoUpload() { logoInput.value?.click(); }
+async function onLogoChange(event) {
+    const file = pickImageFile(event);
+    if (!file)
+        return;
+    if (!file.type.startsWith("image/")) {
+        ElMessage.warning("请选择图片文件");
+        return;
+    }
+    try {
+        form.logo = await readFileAsDataUrl(file);
+        ElMessage.success("品牌图片已载入，保存后会同步显示");
+    }
+    catch (e) {
+        ElMessage.error(e instanceof Error ? e.message : "读取图片失败");
+    }
+    finally {
+        if (logoInput.value)
+            logoInput.value.value = "";
+    }
+}
+function clearLogo() {
+    form.logo = "";
+}
 async function onSave() {
     if (!form.name.trim()) {
         ElMessage.warning("请输入名称");
@@ -366,129 +392,215 @@ const __VLS_94 = __VLS_93({
     label: "Logo",
 }, ...__VLS_functionalComponentArgsRest(__VLS_93));
 __VLS_95.slots.default;
-const __VLS_96 = {}.ElInput;
+__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+    ...{ class: "logo-field" },
+});
+__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+    ...{ class: "logo-preview-frame" },
+});
+if (__VLS_ctx.form.logo) {
+    const __VLS_96 = {}.ElImage;
+    /** @type {[typeof __VLS_components.ElImage, typeof __VLS_components.elImage, ]} */ ;
+    // @ts-ignore
+    const __VLS_97 = __VLS_asFunctionalComponent(__VLS_96, new __VLS_96({
+        src: (__VLS_ctx.form.logo),
+        fit: "cover",
+        ...{ class: "logo-preview" },
+    }));
+    const __VLS_98 = __VLS_97({
+        src: (__VLS_ctx.form.logo),
+        fit: "cover",
+        ...{ class: "logo-preview" },
+    }, ...__VLS_functionalComponentArgsRest(__VLS_97));
+}
+else {
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
+}
+__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+    ...{ class: "logo-actions" },
+});
+const __VLS_100 = {}.ElInput;
 /** @type {[typeof __VLS_components.ElInput, typeof __VLS_components.elInput, ]} */ ;
-// @ts-ignore
-const __VLS_97 = __VLS_asFunctionalComponent(__VLS_96, new __VLS_96({
-    modelValue: (__VLS_ctx.form.logo),
-    placeholder: "图片URL",
-}));
-const __VLS_98 = __VLS_97({
-    modelValue: (__VLS_ctx.form.logo),
-    placeholder: "图片URL",
-}, ...__VLS_functionalComponentArgsRest(__VLS_97));
-var __VLS_95;
-const __VLS_100 = {}.ElFormItem;
-/** @type {[typeof __VLS_components.ElFormItem, typeof __VLS_components.elFormItem, typeof __VLS_components.ElFormItem, typeof __VLS_components.elFormItem, ]} */ ;
 // @ts-ignore
 const __VLS_101 = __VLS_asFunctionalComponent(__VLS_100, new __VLS_100({
-    label: "描述",
+    modelValue: (__VLS_ctx.form.logo),
+    placeholder: "图片URL 或上传图片后自动填充",
 }));
 const __VLS_102 = __VLS_101({
-    label: "描述",
+    modelValue: (__VLS_ctx.form.logo),
+    placeholder: "图片URL 或上传图片后自动填充",
 }, ...__VLS_functionalComponentArgsRest(__VLS_101));
-__VLS_103.slots.default;
-const __VLS_104 = {}.ElInput;
-/** @type {[typeof __VLS_components.ElInput, typeof __VLS_components.elInput, ]} */ ;
+__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+    ...{ class: "logo-buttons" },
+});
+const __VLS_104 = {}.ElButton;
+/** @type {[typeof __VLS_components.ElButton, typeof __VLS_components.elButton, typeof __VLS_components.ElButton, typeof __VLS_components.elButton, ]} */ ;
 // @ts-ignore
 const __VLS_105 = __VLS_asFunctionalComponent(__VLS_104, new __VLS_104({
-    modelValue: (__VLS_ctx.form.description),
-    type: "textarea",
+    ...{ 'onClick': {} },
+    type: "primary",
+    plain: true,
 }));
 const __VLS_106 = __VLS_105({
-    modelValue: (__VLS_ctx.form.description),
-    type: "textarea",
+    ...{ 'onClick': {} },
+    type: "primary",
+    plain: true,
 }, ...__VLS_functionalComponentArgsRest(__VLS_105));
-var __VLS_103;
-const __VLS_108 = {}.ElFormItem;
-/** @type {[typeof __VLS_components.ElFormItem, typeof __VLS_components.elFormItem, typeof __VLS_components.ElFormItem, typeof __VLS_components.elFormItem, ]} */ ;
-// @ts-ignore
-const __VLS_109 = __VLS_asFunctionalComponent(__VLS_108, new __VLS_108({
-    label: "排序",
-}));
-const __VLS_110 = __VLS_109({
-    label: "排序",
-}, ...__VLS_functionalComponentArgsRest(__VLS_109));
-__VLS_111.slots.default;
-const __VLS_112 = {}.ElInputNumber;
-/** @type {[typeof __VLS_components.ElInputNumber, typeof __VLS_components.elInputNumber, ]} */ ;
+let __VLS_108;
+let __VLS_109;
+let __VLS_110;
+const __VLS_111 = {
+    onClick: (__VLS_ctx.triggerLogoUpload)
+};
+__VLS_107.slots.default;
+var __VLS_107;
+const __VLS_112 = {}.ElButton;
+/** @type {[typeof __VLS_components.ElButton, typeof __VLS_components.elButton, typeof __VLS_components.ElButton, typeof __VLS_components.elButton, ]} */ ;
 // @ts-ignore
 const __VLS_113 = __VLS_asFunctionalComponent(__VLS_112, new __VLS_112({
-    modelValue: (__VLS_ctx.form.sort),
-    min: (0),
+    ...{ 'onClick': {} },
 }));
 const __VLS_114 = __VLS_113({
-    modelValue: (__VLS_ctx.form.sort),
-    min: (0),
+    ...{ 'onClick': {} },
 }, ...__VLS_functionalComponentArgsRest(__VLS_113));
-var __VLS_111;
-const __VLS_116 = {}.ElFormItem;
+let __VLS_116;
+let __VLS_117;
+let __VLS_118;
+const __VLS_119 = {
+    onClick: (__VLS_ctx.clearLogo)
+};
+__VLS_115.slots.default;
+var __VLS_115;
+__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+    ...{ class: "logo-tip" },
+});
+__VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
+    ...{ onChange: (__VLS_ctx.onLogoChange) },
+    ref: "logoInput",
+    type: "file",
+    accept: "image/*",
+    ...{ class: "hidden-file" },
+});
+/** @type {typeof __VLS_ctx.logoInput} */ ;
+var __VLS_95;
+const __VLS_120 = {}.ElFormItem;
 /** @type {[typeof __VLS_components.ElFormItem, typeof __VLS_components.elFormItem, typeof __VLS_components.ElFormItem, typeof __VLS_components.elFormItem, ]} */ ;
 // @ts-ignore
-const __VLS_117 = __VLS_asFunctionalComponent(__VLS_116, new __VLS_116({
-    label: "启用",
-}));
-const __VLS_118 = __VLS_117({
-    label: "启用",
-}, ...__VLS_functionalComponentArgsRest(__VLS_117));
-__VLS_119.slots.default;
-const __VLS_120 = {}.ElSwitch;
-/** @type {[typeof __VLS_components.ElSwitch, typeof __VLS_components.elSwitch, ]} */ ;
-// @ts-ignore
 const __VLS_121 = __VLS_asFunctionalComponent(__VLS_120, new __VLS_120({
-    modelValue: (__VLS_ctx.form.enabled),
+    label: "描述",
 }));
 const __VLS_122 = __VLS_121({
-    modelValue: (__VLS_ctx.form.enabled),
+    label: "描述",
 }, ...__VLS_functionalComponentArgsRest(__VLS_121));
-var __VLS_119;
+__VLS_123.slots.default;
+const __VLS_124 = {}.ElInput;
+/** @type {[typeof __VLS_components.ElInput, typeof __VLS_components.elInput, ]} */ ;
+// @ts-ignore
+const __VLS_125 = __VLS_asFunctionalComponent(__VLS_124, new __VLS_124({
+    modelValue: (__VLS_ctx.form.description),
+    type: "textarea",
+}));
+const __VLS_126 = __VLS_125({
+    modelValue: (__VLS_ctx.form.description),
+    type: "textarea",
+}, ...__VLS_functionalComponentArgsRest(__VLS_125));
+var __VLS_123;
+const __VLS_128 = {}.ElFormItem;
+/** @type {[typeof __VLS_components.ElFormItem, typeof __VLS_components.elFormItem, typeof __VLS_components.ElFormItem, typeof __VLS_components.elFormItem, ]} */ ;
+// @ts-ignore
+const __VLS_129 = __VLS_asFunctionalComponent(__VLS_128, new __VLS_128({
+    label: "排序",
+}));
+const __VLS_130 = __VLS_129({
+    label: "排序",
+}, ...__VLS_functionalComponentArgsRest(__VLS_129));
+__VLS_131.slots.default;
+const __VLS_132 = {}.ElInputNumber;
+/** @type {[typeof __VLS_components.ElInputNumber, typeof __VLS_components.elInputNumber, ]} */ ;
+// @ts-ignore
+const __VLS_133 = __VLS_asFunctionalComponent(__VLS_132, new __VLS_132({
+    modelValue: (__VLS_ctx.form.sort),
+    min: (0),
+}));
+const __VLS_134 = __VLS_133({
+    modelValue: (__VLS_ctx.form.sort),
+    min: (0),
+}, ...__VLS_functionalComponentArgsRest(__VLS_133));
+var __VLS_131;
+const __VLS_136 = {}.ElFormItem;
+/** @type {[typeof __VLS_components.ElFormItem, typeof __VLS_components.elFormItem, typeof __VLS_components.ElFormItem, typeof __VLS_components.elFormItem, ]} */ ;
+// @ts-ignore
+const __VLS_137 = __VLS_asFunctionalComponent(__VLS_136, new __VLS_136({
+    label: "启用",
+}));
+const __VLS_138 = __VLS_137({
+    label: "启用",
+}, ...__VLS_functionalComponentArgsRest(__VLS_137));
+__VLS_139.slots.default;
+const __VLS_140 = {}.ElSwitch;
+/** @type {[typeof __VLS_components.ElSwitch, typeof __VLS_components.elSwitch, ]} */ ;
+// @ts-ignore
+const __VLS_141 = __VLS_asFunctionalComponent(__VLS_140, new __VLS_140({
+    modelValue: (__VLS_ctx.form.enabled),
+}));
+const __VLS_142 = __VLS_141({
+    modelValue: (__VLS_ctx.form.enabled),
+}, ...__VLS_functionalComponentArgsRest(__VLS_141));
+var __VLS_139;
 var __VLS_83;
 {
     const { footer: __VLS_thisSlot } = __VLS_79.slots;
-    const __VLS_124 = {}.ElButton;
+    const __VLS_144 = {}.ElButton;
     /** @type {[typeof __VLS_components.ElButton, typeof __VLS_components.elButton, typeof __VLS_components.ElButton, typeof __VLS_components.elButton, ]} */ ;
     // @ts-ignore
-    const __VLS_125 = __VLS_asFunctionalComponent(__VLS_124, new __VLS_124({
+    const __VLS_145 = __VLS_asFunctionalComponent(__VLS_144, new __VLS_144({
         ...{ 'onClick': {} },
     }));
-    const __VLS_126 = __VLS_125({
+    const __VLS_146 = __VLS_145({
         ...{ 'onClick': {} },
-    }, ...__VLS_functionalComponentArgsRest(__VLS_125));
-    let __VLS_128;
-    let __VLS_129;
-    let __VLS_130;
-    const __VLS_131 = {
+    }, ...__VLS_functionalComponentArgsRest(__VLS_145));
+    let __VLS_148;
+    let __VLS_149;
+    let __VLS_150;
+    const __VLS_151 = {
         onClick: (...[$event]) => {
             __VLS_ctx.dialogVisible = false;
         }
     };
-    __VLS_127.slots.default;
-    var __VLS_127;
-    const __VLS_132 = {}.ElButton;
+    __VLS_147.slots.default;
+    var __VLS_147;
+    const __VLS_152 = {}.ElButton;
     /** @type {[typeof __VLS_components.ElButton, typeof __VLS_components.elButton, typeof __VLS_components.ElButton, typeof __VLS_components.elButton, ]} */ ;
     // @ts-ignore
-    const __VLS_133 = __VLS_asFunctionalComponent(__VLS_132, new __VLS_132({
+    const __VLS_153 = __VLS_asFunctionalComponent(__VLS_152, new __VLS_152({
         ...{ 'onClick': {} },
         type: "primary",
         loading: (__VLS_ctx.saving),
     }));
-    const __VLS_134 = __VLS_133({
+    const __VLS_154 = __VLS_153({
         ...{ 'onClick': {} },
         type: "primary",
         loading: (__VLS_ctx.saving),
-    }, ...__VLS_functionalComponentArgsRest(__VLS_133));
-    let __VLS_136;
-    let __VLS_137;
-    let __VLS_138;
-    const __VLS_139 = {
+    }, ...__VLS_functionalComponentArgsRest(__VLS_153));
+    let __VLS_156;
+    let __VLS_157;
+    let __VLS_158;
+    const __VLS_159 = {
         onClick: (__VLS_ctx.onSave)
     };
-    __VLS_135.slots.default;
-    var __VLS_135;
+    __VLS_155.slots.default;
+    var __VLS_155;
 }
 var __VLS_79;
 /** @type {__VLS_StyleScopedClasses['page']} */ ;
 /** @type {__VLS_StyleScopedClasses['toolbar']} */ ;
+/** @type {__VLS_StyleScopedClasses['logo-field']} */ ;
+/** @type {__VLS_StyleScopedClasses['logo-preview-frame']} */ ;
+/** @type {__VLS_StyleScopedClasses['logo-preview']} */ ;
+/** @type {__VLS_StyleScopedClasses['logo-actions']} */ ;
+/** @type {__VLS_StyleScopedClasses['logo-buttons']} */ ;
+/** @type {__VLS_StyleScopedClasses['logo-tip']} */ ;
+/** @type {__VLS_StyleScopedClasses['hidden-file']} */ ;
 var __VLS_dollars;
 const __VLS_self = (await import('vue')).defineComponent({
     setup() {
@@ -500,9 +612,13 @@ const __VLS_self = (await import('vue')).defineComponent({
             list: list,
             dialogVisible: dialogVisible,
             form: form,
+            logoInput: logoInput,
             load: load,
             openCreate: openCreate,
             openEdit: openEdit,
+            triggerLogoUpload: triggerLogoUpload,
+            onLogoChange: onLogoChange,
+            clearLogo: clearLogo,
             onSave: onSave,
             onDelete: onDelete,
         };

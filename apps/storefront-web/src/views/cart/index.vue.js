@@ -7,8 +7,15 @@ const router = useRouter();
 const loading = ref(false);
 async function doCheckout() {
     loading.value = true;
-    await checkout(router);
-    loading.value = false;
+    try {
+        await checkout(router);
+    }
+    catch (e) {
+        window.alert(e instanceof Error ? e.message : "下单失败，请稍后重试");
+    }
+    finally {
+        loading.value = false;
+    }
 }
 debugger; /* PartiallyEnd: #3632/scriptSetup.vue */
 const __VLS_ctx = {};
